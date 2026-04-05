@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/database/app_database.dart';
+import '../../../core/providers/database_provider.dart';
 import '../../../core/utils/phone_normaliser.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/onboarding_provider.dart';

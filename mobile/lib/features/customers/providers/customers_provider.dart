@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/daos/customers_dao.dart';
-import '../../../features/transactions/providers/transactions_provider.dart';
+import '../../../core/providers/database_provider.dart';
 import '../models/customer_with_balance.dart';
 import '../repositories/customers_repository.dart';
 
@@ -25,6 +25,7 @@ final customersDaoProvider = Provider<CustomersDao>((ref) {
 final customersRepositoryProvider = Provider<CustomersRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return CustomersRepository(
+    db: db,
     customersDao: db.customersDao,
     eventsDao: db.eventsDao,
   );
@@ -32,7 +33,8 @@ final customersRepositoryProvider = Provider<CustomersRepository>((ref) {
 
 /// Stream of all customers with computed balances for a shop.
 final customersWithBalancesProvider =
-    StreamProvider.family<List<CustomerWithBalance>, String>((ref, shopId) {
+    StreamProvider.autoDispose.family<List<CustomerWithBalance>, String>(
+        (ref, shopId) {
   final repo = ref.watch(customersRepositoryProvider);
   return repo.watchCustomersWithBalances(shopId);
 });
@@ -46,7 +48,8 @@ final customerSortProvider =
 
 /// Derived provider: filtered + sorted customer list for a shop.
 final filteredCustomersProvider =
-    Provider.family<List<CustomerWithBalance>, String>((ref, shopId) {
+    Provider.autoDispose.family<List<CustomerWithBalance>, String>(
+        (ref, shopId) {
   final asyncData = ref.watch(customersWithBalancesProvider(shopId));
   final query = ref.watch(customerSearchQueryProvider).toLowerCase();
   final sort = ref.watch(customerSortProvider);
@@ -91,10 +94,30 @@ final filteredCustomersProvider =
 });
 
 /// Sum of all positive balances (customers who owe the shop) in paisa.
-final totalOwedProvider = Provider.family<int, String>((ref, shopId) {
+final totalOwedProvider =
+    Provider.autoDispose.family<int, String>((ref, shopId) {
   final asyncData = ref.watch(customersWithBalancesProvider(shopId));
   final customers = asyncData.valueOrNull ?? [];
   return customers
       .where((c) => c.balancePaisa > 0)
       .fold<int>(0, (sum, c) => sum + c.balancePaisa);
+});
+
+/// Sum of absolute negative balances (shop owes these customers) in paisa.
+/// Returns positive value representing the total the shop owes.
+final totalShopOwesPaisaProvider =
+    Provider.autoDispose.family<int, String>((ref, shopId) {
+  final asyncData = ref.watch(customersWithBalancesProvider(shopId));
+  final customers = asyncData.valueOrNull ?? [];
+  return customers
+      .where((c) => c.balancePaisa < 0)
+      .fold<int>(0, (sum, c) => sum + c.balancePaisa.abs());
+});
+
+/// Net position in paisa: totalOwed - totalShopOwes. Can be negative.
+final netPositionPaisaProvider =
+    Provider.autoDispose.family<int, String>((ref, shopId) {
+  final owed = ref.watch(totalOwedProvider(shopId));
+  final owes = ref.watch(totalShopOwesPaisaProvider(shopId));
+  return owed - owes;
 });

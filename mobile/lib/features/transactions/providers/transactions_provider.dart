@@ -2,18 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/event_constants.dart';
 import '../../../core/database/app_database.dart';
+import '../../../core/providers/database_provider.dart';
 import '../repositories/event_repository.dart';
-
-// ---------------------------------------------------------------------------
-// Database provider
-// Shared singleton AppDatabase for the whole app.
-// ---------------------------------------------------------------------------
-
-final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase();
-  ref.onDispose(db.close);
-  return db;
-});
 
 // ---------------------------------------------------------------------------
 // EventRepository provider

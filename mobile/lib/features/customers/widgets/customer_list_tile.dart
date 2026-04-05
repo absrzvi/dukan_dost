@@ -22,8 +22,8 @@ class CustomerListTile extends StatelessWidget {
     final customer = item.customer;
     final balance = item.balancePaisa;
     final overdue = item.daysOverdue;
-    final isOverdue7Plus = overdue != null && overdue > 7;
-    final isOverdue1To7 = overdue != null && overdue >= 1 && overdue <= 7;
+    final isOverdue7Plus = overdue != null && overdue >= 7;
+    final isOverdue1To7 = overdue != null && overdue >= 1 && overdue < 7;
 
     final Color balanceColor;
     if (balance > 0) {

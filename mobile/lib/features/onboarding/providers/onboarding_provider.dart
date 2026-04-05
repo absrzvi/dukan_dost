@@ -1,16 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
-import '../../../core/database/app_database.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/providers/database_provider.dart';
 import '../repositories/shop_repository.dart';
-
-// ---------------------------------------------------------------------------
-// Database provider
-// ---------------------------------------------------------------------------
-
-final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  return AppDatabase();
-});
 
 // ---------------------------------------------------------------------------
 // Shop repository provider

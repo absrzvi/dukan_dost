@@ -55,7 +55,7 @@ class AppStrings {
   static const String totalOwedToMeRoman = 'Mujhe milna hai';
   static const String totalIOwe = 'مجھے دینا ہے';
   static const String totalIOweRoman = 'Mujhe dena hai';
-  static const String netPosition = 'کل پوزیشن';
+  static const String netPosition = 'خالص';
   static const String netPositionRoman = 'Kul position';
 
   // Transactions
@@ -74,6 +74,7 @@ class AppStrings {
 
   // Customers
   static const String customers = 'گاہک';
+  static const String searchCustomers = 'گاہک تلاش کریں';
   static const String customersRoman = 'Grahak';
   static const String addCustomer = 'گاہک شامل کریں';
   static const String addCustomerRoman = 'Grahak shamil karein';
@@ -104,7 +105,7 @@ class AppStrings {
   // Reminders
   static const String sendReminder = 'یاد دلائیں';
   static const String sendReminderRoman = 'Yaad dilayein';
-  static const String daysOverdue = 'دن باقی';
+  static const String daysOverdue = 'دن ہو گئے';
   static const String daysOverdueRoman = 'din baqi';
   static const String lastReminderSent = 'آخری یاد دہانی';
   static const String lastReminderSentRoman = 'Aakhri yaad dahaani';

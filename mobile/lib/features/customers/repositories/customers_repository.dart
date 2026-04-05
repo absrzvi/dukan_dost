@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/database/app_database.dart';
@@ -14,11 +17,14 @@ import '../models/customer_with_balance.dart';
 ///   - Every create/update/delete also queues a SyncQueue entry (future STORY-013).
 class CustomersRepository {
   CustomersRepository({
+    required AppDatabase db,
     required CustomersDao customersDao,
     required EventsDao eventsDao,
-  })  : _customersDao = customersDao,
+  })  : _db = db,
+        _customersDao = customersDao,
         _eventsDao = eventsDao;
 
+  final AppDatabase _db;
   final CustomersDao _customersDao;
   final EventsDao _eventsDao;
   final _uuid = const Uuid();
@@ -28,9 +34,18 @@ class CustomersRepository {
   // ---------------------------------------------------------------------------
 
   /// Stream of all customers enriched with their computed balances.
-  /// Auto-updates when either customers or events tables change.
+  /// Auto-updates when either the Customers table or the Events table changes,
+  /// using [Rx.combineLatest2] so a new CREDIT/PAYMENT immediately triggers
+  /// a re-computation of all balances.
   Stream<List<CustomerWithBalance>> watchCustomersWithBalances(String shopId) {
-    return _customersDao.watchCustomers(shopId).asyncMap((customerList) async {
+    final customersStream = _customersDao.watchCustomers(shopId);
+    final eventsStream = _eventsDao.watchShopEvents(shopId);
+
+    return Rx.combineLatest2(
+      customersStream,
+      eventsStream,
+      (List<Customer> customers, List<Event> _) => customers,
+    ).asyncMap((customerList) async {
       final enriched = <CustomerWithBalance>[];
       for (final customer in customerList) {
         final balance = await _eventsDao.computeBalance(
@@ -75,6 +90,7 @@ class CustomersRepository {
   // ---------------------------------------------------------------------------
 
   /// Create a new customer locally and queue for sync.
+  /// Atomic: inserts the customer row and SyncQueue entry in one transaction.
   Future<Customer> createCustomer({
     required String shopId,
     required String name,
@@ -95,15 +111,28 @@ class CustomersRepository {
       isDeleted: const Value(0),
     );
 
-    await _customersDao.upsertCustomer(companion);
-
-    // TODO(STORY-013): enqueue sync entry for customer creation.
+    await _db.transaction(() async {
+      await _customersDao.upsertCustomer(companion);
+      await _db.into(_db.syncQueue).insert(SyncQueueCompanion.insert(
+            eventId: id,
+            status: const Value('PENDING'),
+            payload: Value(jsonEncode({
+              'action': 'CREATE_CUSTOMER',
+              'id': id,
+              'name': name,
+              'phone': phone,
+              'shop_id': shopId,
+            })),
+            createdAt: now,
+          ));
+    });
 
     final created = await _customersDao.getCustomer(id);
     return created!;
   }
 
   /// Update an existing customer locally and queue for sync.
+  /// Atomic: updates the customer row and SyncQueue entry in one transaction.
   Future<void> updateCustomer({
     required String customerId,
     String? name,
@@ -118,16 +147,42 @@ class CustomersRepository {
       isFlagged: isFlagged != null ? Value(isFlagged) : const Value.absent(),
       updatedAt: Value(now),
     );
-    await _customersDao.upsertCustomer(companion);
 
-    // TODO(STORY-013): enqueue sync entry for customer update.
+    await _db.transaction(() async {
+      await _customersDao.upsertCustomer(companion);
+      await _db.into(_db.syncQueue).insert(SyncQueueCompanion.insert(
+            eventId: '${customerId}_update_$now',
+            status: const Value('PENDING'),
+            payload: Value(jsonEncode({
+              'action': 'UPDATE_CUSTOMER',
+              'id': customerId,
+              if (name != null) 'name': name,
+              if (phone != null) 'phone': phone,
+              if (isFlagged != null) 'is_flagged': isFlagged,
+            })),
+            createdAt: now,
+          ));
+    });
   }
 
   /// Soft-delete a customer locally and queue for sync.
+  /// Atomic: soft-deletes the customer row and SyncQueue entry in one transaction.
   Future<void> deleteCustomer(String customerId) async {
-    await _customersDao.softDeleteCustomer(customerId);
+    final now = DateTime.now().millisecondsSinceEpoch;
 
-    // TODO(STORY-013): enqueue sync entry for customer deletion.
+    await _db.transaction(() async {
+      await _customersDao.softDeleteCustomer(customerId);
+      await _db.into(_db.syncQueue).insert(SyncQueueCompanion.insert(
+            eventId: '${customerId}_delete_$now',
+            status: const Value('PENDING'),
+            payload: Value(jsonEncode({
+              'action': 'DELETE_CUSTOMER',
+              'id': customerId,
+              'soft_delete': true,
+            })),
+            createdAt: now,
+          ));
+    });
   }
 
   /// Get a single customer by id.

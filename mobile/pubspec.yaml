@@ -53,6 +53,8 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   # UUID generation
   uuid: ^4.4.2
+  # Reactive streams (combineLatest for multi-table watches)
+  rxdart: ^0.27.7
   # Google Drive backup
   google_sign_in: ^6.2.1
   googleapis: ^13.2.0

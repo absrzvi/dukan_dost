@@ -63,6 +63,9 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
   @override
   Widget build(BuildContext context) {
     final totalOwed = ref.watch(totalOwedProvider(widget.shopId));
+    final totalShopOwes =
+        ref.watch(totalShopOwesPaisaProvider(widget.shopId));
+    final netPosition = ref.watch(netPositionPaisaProvider(widget.shopId));
     final filteredAsync =
         ref.watch(customersWithBalancesProvider(widget.shopId));
     final filtered =
@@ -97,7 +100,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
             IconButton(
               icon: Icon(_searchOpen ? Icons.close : Icons.search),
               onPressed: _toggleSearch,
-              tooltip: AppStrings.customers,
+              tooltip: AppStrings.searchCustomers,
             ),
           ],
         ),
@@ -111,7 +114,11 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
         body: Column(
           children: [
             // Summary panel
-            _SummaryPanel(totalOwedPaisa: totalOwed),
+            _SummaryPanel(
+              totalOwedPaisa: totalOwed,
+              totalShopOwesPaisa: totalShopOwes,
+              netPositionPaisa: netPosition,
+            ),
 
             // Sort bar
             _SortBar(
@@ -167,39 +174,82 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
 // ---------------------------------------------------------------------------
 
 class _SummaryPanel extends StatelessWidget {
-  const _SummaryPanel({required this.totalOwedPaisa});
+  const _SummaryPanel({
+    required this.totalOwedPaisa,
+    required this.totalShopOwesPaisa,
+    required this.netPositionPaisa,
+  });
 
   final int totalOwedPaisa;
+  final int totalShopOwesPaisa;
+  final int netPositionPaisa;
 
   @override
   Widget build(BuildContext context) {
-    final color = totalOwedPaisa > 0
+    final netColor = netPositionPaisa >= 0
         ? AppColors.balancePositive
         : AppColors.balanceNegative;
     return Container(
       width: double.infinity,
       color: AppColors.surface,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          const Text(
-            AppStrings.totalOwed,
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+          _SummaryRow(
+            label: AppStrings.totalOwedToMe,
+            amount: totalOwedPaisa,
+            color: AppColors.balancePositive,
           ),
-          Text(
-            AmountFormatter.format(totalOwedPaisa),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          const SizedBox(height: 4),
+          _SummaryRow(
+            label: AppStrings.totalIOwe,
+            amount: totalShopOwesPaisa,
+            color: AppColors.balanceNegative,
+          ),
+          const SizedBox(height: 4),
+          _SummaryRow(
+            label: AppStrings.netPosition,
+            amount: netPositionPaisa.abs(),
+            color: netColor,
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.label,
+    required this.amount,
+    required this.color,
+  });
+
+  final String label;
+  final int amount;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        Text(
+          AmountFormatter.format(amount),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }
