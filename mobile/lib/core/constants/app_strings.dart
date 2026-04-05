@@ -72,6 +72,20 @@ class AppStrings {
   static const String whatsappCreditTemplate =
       'السلام علیکم! آپ کا ادھار محفوظ ہو گیا۔ ادھار: {amount}۔ شکریہ — {shopName}';
 
+  // Payment Entry
+  static const String paymentEntry = 'ادائیگی لکھیں';
+  static const String paymentSaved = 'ادائیگی محفوظ';
+  static const String overpaymentWarning = 'زیادہ رقم — بقایا منفی ہو گا';
+  static const String partialPayment = 'جزوی ادائیگی';
+  static const String amountBeingPaid = 'ادا کی جانے والی رقم';
+  static const String remainingBalance = 'باقی بقایا';
+  static const String maxAmount = 'زیادہ سے زیادہ';
+  static const String amountExceedsBalance = 'رقم بقایا سے زیادہ ہے';
+  static const String whatsappPaymentTemplate =
+      'السلام علیکم {name} بھائی! آپ کی ادائیگی PKR {amount} محفوظ ہو گئی۔ باقی بقایا: {remaining}۔ شکریہ — {shopName}';
+  static const String whatsappHisaabSaafTemplate =
+      'السلام علیکم {name} بھائی! آپ کا حساب صاف ہو گیا۔ PKR {amount} ادا ہو گئی۔ شکریہ — {shopName}';
+
   // Transactions
   static const String udhaar = 'ادھار';
   static const String udhaarRoman = 'Udhaar';

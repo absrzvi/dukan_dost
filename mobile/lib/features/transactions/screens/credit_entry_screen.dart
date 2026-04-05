@@ -8,6 +8,7 @@ import '../../../core/providers/database_provider.dart';
 import '../../../core/utils/amount_formatter.dart';
 import '../../../core/utils/whatsapp_helper.dart';
 import '../../../shared/widgets/amount_keypad.dart';
+import '../../../shared/widgets/hisaab_saaf_overlay.dart';
 import '../providers/transactions_provider.dart';
 
 /// Credit entry screen. Records a CREDIT event for a given customer.
@@ -96,7 +97,7 @@ class _CreditEntryScreenState extends ConsumerState<CreditEntryScreen> {
         showDialog<void>(
           context: context,
           barrierDismissible: false,
-          builder: (_) => const _HisaabSaafOverlay(),
+          builder: (_) => const HisaabSaafOverlay(),
         );
         Future.delayed(const Duration(milliseconds: 1500), () {
           if (mounted) {
@@ -294,37 +295,3 @@ class _CreditEntryScreenState extends ConsumerState<CreditEntryScreen> {
   }
 }
 
-/// Full-screen celebration overlay shown when the customer's balance hits zero.
-class _HisaabSaafOverlay extends StatelessWidget {
-  const _HisaabSaafOverlay();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Dialog.fullscreen(
-      backgroundColor: AppColors.hisaabSaafGreen,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.check_circle, size: 80, color: Colors.white),
-          SizedBox(height: 24),
-          Text(
-            AppStrings.hisaabSaaf,
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 12),
-          Text(
-            AppStrings.hisaabSaafSubtitle,
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

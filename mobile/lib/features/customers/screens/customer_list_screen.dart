@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/amount_formatter.dart';
 import '../../transactions/screens/credit_entry_screen.dart';
+import '../../transactions/screens/payment_entry_screen.dart';
 import '../models/customer_with_balance.dart';
 import '../providers/customers_provider.dart';
 import '../widgets/add_customer_sheet.dart';
@@ -149,6 +150,8 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                           key: ValueKey(item.customer.id),
                           item: item,
                           onTap: () => _navigateToDetail(context, item),
+                          onLongPress: () =>
+                              _showActionSheet(context, item),
                         );
                       },
                     ),
@@ -170,6 +173,61 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
           customerId: item.customer.id,
           customerName: item.customer.name,
           customerPhone: item.customer.phone,
+        ),
+      ),
+    );
+  }
+
+  void _showActionSheet(BuildContext context, CustomerWithBalance item) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.arrow_upward,
+                    color: AppColors.creditColor),
+                title: const Text(AppStrings.creditEntry),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => CreditEntryScreen(
+                        customerId: item.customer.id,
+                        customerName: item.customer.name,
+                        customerPhone: item.customer.phone,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.arrow_downward,
+                    color: AppColors.paymentColor),
+                title: const Text(AppStrings.paymentEntry),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => PaymentEntryScreen(
+                        customerId: item.customer.id,
+                        customerName: item.customer.name,
+                        customerPhone: item.customer.phone,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
