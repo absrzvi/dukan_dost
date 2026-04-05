@@ -1,5 +1,4 @@
 // ignore_for_file: avoid_relative_lib_imports
-import 'dart:async';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -217,20 +216,11 @@ void main() {
       () async {
     final stream = repo.watchEvents(customerId, PartyType.customer);
 
-    // Collect two emissions: initial empty list, then list with one event.
-    final emissionsCompleter = Completer<List<List<Event>>>();
-    final collected = <List<Event>>[];
+    // Collect first emission before inserting — should be empty.
+    final firstEmission = await stream.first;
+    expect(firstEmission, isEmpty);
 
-    final sub = stream.listen((events) {
-      collected.add(events);
-      if (collected.length == 2) {
-        emissionsCompleter.complete(collected);
-      }
-    });
-
-    // Initial emission should be empty.
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-
+    // Now insert and collect second emission.
     await repo.addEvent(
       shopId: shopId,
       eventType: EventType.credit,
@@ -240,12 +230,8 @@ void main() {
       deviceId: deviceId,
     );
 
-    final emissions = await emissionsCompleter.future
-        .timeout(const Duration(seconds: 5));
-    await sub.cancel();
-
-    expect(emissions[0], isEmpty);
-    expect(emissions[1].length, 1);
-    expect(emissions[1].first.amountPaisa, 10000);
+    final secondEmission = await stream.first;
+    expect(secondEmission.length, 1);
+    expect(secondEmission.first.amountPaisa, 10000);
   });
 }

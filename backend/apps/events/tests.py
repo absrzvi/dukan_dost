@@ -128,7 +128,7 @@ def test_event_save_existing_raises() -> None:
         device_id="device-test",
         device_timestamp=datetime(2026, 4, 5, 11, 0, 0, tzinfo=timezone.utc),
     )
-    with pytest.raises(ValueError, match="append-only"):
+    with pytest.raises(ValueError, match="immutable"):
         duplicate.save()
 
 
@@ -194,7 +194,7 @@ def test_post_sync_events_duplicate_uuid(client) -> None:
 
 @pytest.mark.django_db
 def test_post_sync_events_invalid_event_type(client) -> None:
-    """POST /api/sync/events with invalid event_type returns 400."""
+    """POST /api/sync/events with invalid event_type — skip-invalid: returns 200 with errors."""
     shop = _make_shop("+923010000003")
     token = _make_token(shop)
     _auth_client(client, token)
@@ -205,12 +205,14 @@ def test_post_sync_events_invalid_event_type(client) -> None:
         data=payload,
         content_type="application/json",
     )
-    assert response.status_code == 400
+    assert response.status_code == 200
+    assert response.data["accepted"] == 0
+    assert len(response.data["errors"]) == 1
 
 
 @pytest.mark.django_db
 def test_post_sync_events_negative_amount(client) -> None:
-    """POST /api/sync/events with amount_paisa < 0 returns 400."""
+    """POST /api/sync/events with amount_paisa < 0 — skip-invalid: returns 200 with errors."""
     shop = _make_shop("+923010000004")
     token = _make_token(shop)
     _auth_client(client, token)
@@ -221,7 +223,9 @@ def test_post_sync_events_negative_amount(client) -> None:
         data=payload,
         content_type="application/json",
     )
-    assert response.status_code == 400
+    assert response.status_code == 200
+    assert response.data["accepted"] == 0
+    assert len(response.data["errors"]) == 1
 
 
 # ---------------------------------------------------------------------------
@@ -277,3 +281,58 @@ def test_post_sync_events_requires_auth(client) -> None:
         content_type="application/json",
     )
     assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_post_sync_events_partial_invalid_batch(client) -> None:
+    """POST /api/sync/events with mixed valid/invalid — 200, accepted=2, errors has 1 entry, DB has 2 rows."""
+    from apps.events.models import Event
+
+    shop = _make_shop("+923010000006")
+    token = _make_token(shop)
+    _auth_client(client, token)
+
+    valid_id_1 = uuid.uuid4()
+    valid_id_2 = uuid.uuid4()
+    payload = {
+        "events": [
+            _event_payload(event_id=valid_id_1, amount_paisa=10000),
+            _event_payload(event_id=valid_id_2, amount_paisa=20000),
+            _event_payload(event_type="INVALID_TYPE", amount_paisa=5000),
+        ]
+    }
+    response = client.post(
+        "/api/sync/events",
+        data=payload,
+        content_type="application/json",
+    )
+    assert response.status_code == 200, response.data
+    assert response.data["accepted"] == 2
+    assert len(response.data["errors"]) == 1
+    assert Event.objects.filter(id__in=[valid_id_1, valid_id_2]).count() == 2
+
+
+@pytest.mark.django_db
+def test_post_sync_events_persisted_to_db(client) -> None:
+    """After valid batch POST, all events are persisted to the DB."""
+    from apps.events.models import Event
+
+    shop = _make_shop("+923010000007")
+    token = _make_token(shop)
+    _auth_client(client, token)
+
+    batch = [
+        _event_payload(event_id=uuid.uuid4(), amount_paisa=10000),
+        _event_payload(event_id=uuid.uuid4(), amount_paisa=20000),
+        _event_payload(event_id=uuid.uuid4(), event_type="PAYMENT", amount_paisa=5000),
+    ]
+    event_ids = [e["id"] for e in batch]
+
+    response = client.post(
+        "/api/sync/events",
+        data={"events": batch},
+        content_type="application/json",
+    )
+    assert response.status_code == 200, response.data
+    assert response.data["accepted"] == len(batch)
+    assert Event.objects.filter(id__in=event_ids).count() == len(batch)

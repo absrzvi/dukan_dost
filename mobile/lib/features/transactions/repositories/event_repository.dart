@@ -27,6 +27,8 @@ class EventRepository {
   /// [amountPaisa] must always be a non-negative integer.
   /// [eventType]   must be one of [EventType] constants.
   /// [partyType]   must be one of [PartyType] constants.
+  /// [voiceNotePath] optional local path to a voice note file; stored locally
+  ///   only and NOT included in the sync payload (voice note sync is out of scope).
   Future<Event> addEvent({
     required String shopId,
     required String eventType,
@@ -34,21 +36,19 @@ class EventRepository {
     required String partyId,
     required int amountPaisa,
     String? note,
+    String? voiceNotePath,
     String? deviceId,
     String? actorLabel,
   }) {
-    assert(amountPaisa >= 0, 'amountPaisa must be >= 0');
-    assert(
-      eventType == EventType.credit ||
-          eventType == EventType.payment ||
-          eventType == EventType.reversal ||
-          eventType == EventType.reminderSent,
-      'eventType must be one of EventType constants',
-    );
-    assert(
-      partyType == PartyType.customer || partyType == PartyType.supplier,
-      'partyType must be one of PartyType constants',
-    );
+    if (amountPaisa < 0) {
+      throw ArgumentError('amountPaisa must be >= 0, got $amountPaisa');
+    }
+    if (!EventType.values.contains(eventType)) {
+      throw ArgumentError('Invalid eventType: $eventType');
+    }
+    if (!PartyType.values.contains(partyType)) {
+      throw ArgumentError('Invalid partyType: $partyType');
+    }
 
     final id = _uuid.v4();
     final effectiveDeviceId = deviceId ?? 'unknown-device';
@@ -62,6 +62,7 @@ class EventRepository {
       partyId: partyId,
       amountPaisa: amountPaisa,
       note: note,
+      voiceNotePath: voiceNotePath,
       deviceId: effectiveDeviceId,
       actorLabel: actorLabel,
       deviceTimestamp: now,
@@ -86,7 +87,7 @@ class EventRepository {
   // Queries / Streams
   // ---------------------------------------------------------------------------
 
-  /// Stream of events for a party ordered by deviceTimestamp descending.
+  /// Stream of events for a party ordered by deviceTimestamp ascending.
   Stream<List<Event>> watchEvents(String partyId, String partyType) {
     return _dao.watchEventsForParty(partyId, partyType);
   }

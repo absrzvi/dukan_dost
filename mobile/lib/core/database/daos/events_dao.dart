@@ -8,6 +8,19 @@ import '../tables/sync_queue_table.dart';
 
 part 'events_dao.g.dart';
 
+// ---------------------------------------------------------------------------
+// Timestamp helpers
+// ---------------------------------------------------------------------------
+
+/// Converts an ISO 8601 string (as returned by GET /api/sync/events) to
+/// epoch milliseconds (as stored in the local Events table).
+/// Used when writing events received from GET /api/sync/events.
+// ignore: unused_element
+int? _isoToEpochMillis(String? iso) {
+  if (iso == null) return null;
+  return DateTime.parse(iso).millisecondsSinceEpoch;
+}
+
 /// DAO for the append-only Events table plus SyncQueue entries.
 ///
 /// Iron Rules:
@@ -57,8 +70,12 @@ class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
     );
 
     // Build the sync payload matching POST /api/sync/events body.
+    // shop_id is included for cross-validation: server ignores it if it matches
+    // the session shop, returns 403 if it doesn't.
+    // Note: voiceNotePath is intentionally excluded — voice note sync is out of scope.
     final payloadMap = <String, dynamic>{
       'id': id,
+      'shop_id': shopId,
       'event_type': eventType,
       'party_type': partyType,
       'party_id': partyId,
@@ -134,7 +151,7 @@ class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
   // Streams
   // ---------------------------------------------------------------------------
 
-  /// Stream of events for a party, ordered by deviceTimestamp descending.
+  /// Stream of events for a party, ordered by deviceTimestamp ascending.
   /// Use with Riverpod StreamProvider.
   Stream<List<Event>> watchEventsForParty(
     String partyId,
@@ -147,7 +164,7 @@ class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
           )
           ..orderBy([
             (e) =>
-                OrderingTerm(expression: e.deviceTimestamp, mode: OrderingMode.desc),
+                OrderingTerm(expression: e.deviceTimestamp, mode: OrderingMode.asc),
           ]))
         .watch();
   }

@@ -1,5 +1,5 @@
 # STORY-006: Drift Event Log (Local SQLite Append-Only Event Log with Balance Computation)
-Status: TODO
+Status: IN REVIEW
 Sprint: 2
 Points: 5
 
@@ -7,16 +7,16 @@ Points: 5
 As a flutter-dev agent, I want the local Drift database to have a fully working, append-only Events table with balance computation queries and a SyncQueue table, so that all subsequent transaction features can write events locally and read computed balances without any network dependency.
 
 ## Acceptance Criteria
-- [ ] AC1: Drift `Events` table is created with all fields defined in DATA_MODEL.md: `id`, `shop_id`, `event_type` (CHECK IN CREDIT/PAYMENT/REVERSAL/REMINDER_SENT), `party_type` (CHECK IN CUSTOMER/SUPPLIER), `party_id`, `amount_paisa` (>= 0), `note`, `voice_note_path`, `device_id`, `actor_label`, `device_timestamp`, `server_timestamp`, `created_at`.
-- [ ] AC2: All four indexes defined in DATA_MODEL.md are present: `idx_events_party`, `idx_events_shop`, `idx_events_device_ts`, `idx_events_server_ts`.
-- [ ] AC3: The Drift DAO exposes an `insertEvent()` method that appends a new event and simultaneously inserts a corresponding `SyncQueue` row with status PENDING.
-- [ ] AC4: There is no `updateEvent()` or `deleteEvent()` method. Corrections are modelled as REVERSAL events only.
-- [ ] AC5: `computeBalance(partyType, partyId)` method replays the event log for the given party and returns an integer paisa balance: sum of CREDIT amounts minus sum of PAYMENT and REVERSAL amounts.
-- [ ] AC6: `computeBalance` returns 0 (not null) when a party has no events.
-- [ ] AC7: `watchEventsForParty(partyType, partyId)` returns a Drift `Stream` of event lists ordered by `device_timestamp` ascending, usable by Riverpod `StreamProvider`.
-- [ ] AC8: `SyncQueue` table is created with all fields in DATA_MODEL.md; `idx_syncqueue_status` index is present.
-- [ ] AC9: All monetary amounts in tests use integer paisa with no floating-point arithmetic.
-- [ ] AC10: Unit tests cover: insert event, balance computation (credit only, payment only, mixed, zero balance, reversal), and stream emission on new insert.
+- [x] AC1: Drift `Events` table is created with all fields defined in DATA_MODEL.md: `id`, `shop_id`, `event_type` (CHECK IN CREDIT/PAYMENT/REVERSAL/REMINDER_SENT), `party_type` (CHECK IN CUSTOMER/SUPPLIER), `party_id`, `amount_paisa` (>= 0), `note`, `voice_note_path`, `device_id`, `actor_label`, `device_timestamp`, `server_timestamp`, `created_at`.
+- [x] AC2: All four indexes defined in DATA_MODEL.md are present: `idx_events_party`, `idx_events_shop`, `idx_events_device_ts`, `idx_events_server_ts`.
+- [x] AC3: The Drift DAO exposes an `insertEvent()` method that appends a new event and simultaneously inserts a corresponding `SyncQueue` row with status PENDING.
+- [x] AC4: There is no `updateEvent()` or `deleteEvent()` method. Corrections are modelled as REVERSAL events only.
+- [x] AC5: `computeBalance(partyType, partyId)` method replays the event log for the given party and returns an integer paisa balance: sum of CREDIT amounts minus sum of PAYMENT and REVERSAL amounts.
+- [x] AC6: `computeBalance` returns 0 (not null) when a party has no events.
+- [x] AC7: `watchEventsForParty(partyType, partyId)` returns a Drift `Stream` of event lists ordered by `device_timestamp` ascending, usable by Riverpod `StreamProvider`.
+- [x] AC8: `SyncQueue` table is created with all fields in DATA_MODEL.md; `idx_syncqueue_status` index is present.
+- [x] AC9: All monetary amounts in tests use integer paisa with no floating-point arithmetic.
+- [x] AC10: Unit tests cover: insert event, balance computation (credit only, payment only, mixed, zero balance, reversal), and stream emission on new insert.
 
 ## Technical Notes
 ### Flutter
@@ -38,8 +38,8 @@ This story IS the offline foundation. Every write goes directly to the local SQL
 - STORY-002 (Flutter project scaffold must be in place with Drift dependency in pubspec.yaml)
 
 ## Definition of Done
-- [ ] All ACs passing
-- [ ] flutter test passing
-- [ ] flutter analyze clean
-- [ ] python -m pytest passing
+- [x] All ACs passing
+- [x] flutter test passing
+- [x] flutter analyze clean
+- [x] python -m pytest passing
 - [ ] Offline behaviour verified manually

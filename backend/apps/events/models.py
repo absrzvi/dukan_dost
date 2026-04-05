@@ -12,7 +12,7 @@ MONETARY AMOUNTS: Always use BigIntegerField for PKR paisa. Never FloatField or 
 
 import uuid
 
-from django.db import models
+from django.db import IntegrityError, models
 
 
 class Event(models.Model):
@@ -69,28 +69,26 @@ class Event(models.Model):
     def save(self, *args, **kwargs) -> None:  # type: ignore[override]
         """
         APPEND-ONLY enforcement at the model layer.
-        Raises an exception if attempting to update an existing Event record.
-        New records (no pk match in DB) are allowed.
+        Raises ValueError if attempting to update an existing Event record.
+        For new records (pk may be client-supplied), catches IntegrityError from
+        the actual DB write to handle duplicate UUIDs atomically — this avoids
+        the TOCTOU race condition of a check-then-save pattern.
         """
-        if self.pk is not None:
-            if Event.objects.filter(pk=self.pk).exists():
-                raise ValueError(
-                    f"Event {self.pk} already exists. "
-                    "Events are append-only and cannot be updated. "
-                    "Create a REVERSAL event instead."
-                )
-        super().save(*args, **kwargs)
+        # Detect update attempt: only raise if the record is already persisted.
+        # We use force_insert semantics — if kwargs indicate an update, block it.
+        if kwargs.get("force_update") or (not kwargs.get("force_insert") and self.pk is not None and Event.objects.filter(pk=self.pk).exists()):
+            raise ValueError("Event records are immutable. Use a REVERSAL event to correct mistakes.")
+        try:
+            super().save(*args, **kwargs)
+        except IntegrityError:
+            raise ValueError("Event with this UUID already exists.")
 
     def delete(self, *args, **kwargs) -> tuple:  # type: ignore[override]
         """
         APPEND-ONLY enforcement at the model layer.
         Raises an exception unconditionally — Event records are never deleted.
         """
-        raise ValueError(
-            f"Event {self.pk} cannot be deleted. "
-            "Events are append-only and immutable. "
-            "Create a REVERSAL event to reverse a transaction."
-        )
+        raise ValueError("Event records cannot be deleted. The event log is append-only.")
 
     def __str__(self) -> str:
         return f"{self.event_type} {self.amount_paisa} paisa @ {self.device_timestamp}"

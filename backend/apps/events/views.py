@@ -19,7 +19,7 @@ from rest_framework.views import APIView
 from apps.authentication.authentication import ShopTokenAuthentication
 
 from .models import Event
-from .serializers import EventSerializer
+from .serializers import EventReadSerializer, EventWriteSerializer
 
 
 class IsAuthenticatedShop(BasePermission):
@@ -85,31 +85,24 @@ class EventSyncView(APIView):
                 duplicates += 1
                 continue
 
-            serializer = EventSerializer(data=event_data)
+            serializer = EventWriteSerializer(data=event_data)
             if not serializer.is_valid():
-                errors.append({"index": idx, "id": event_id, "errors": serializer.errors})
+                # Skip invalid events — add to errors list and continue batch.
+                errors.append({"index": idx, "errors": serializer.errors})
                 continue
 
             # Inject server-controlled fields.
             serializer.save(shop=shop)
             accepted += 1
 
-        if errors:
-            return Response(
-                {
-                    "detail": "One or more events failed validation.",
-                    "errors": errors,
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        server_timestamp = datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z")
+        server_timestamp = datetime.now(tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f') + 'Z'
 
         return Response(
             {
                 "accepted": accepted,
                 "duplicates": duplicates,
                 "server_timestamp": server_timestamp,
+                "errors": errors,
             },
             status=status.HTTP_200_OK,
         )
@@ -160,7 +153,7 @@ class EventSyncView(APIView):
         has_more = len(rows) > limit
         rows = rows[:limit]
 
-        serializer = EventSerializer(rows, many=True)
+        serializer = EventReadSerializer(rows, many=True)
 
         latest_ts = (
             rows[-1].server_timestamp.isoformat().replace("+00:00", "Z")

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/event_constants.dart';
 import '../../../core/database/app_database.dart';
 import '../repositories/event_repository.dart';
 
@@ -31,7 +32,7 @@ final eventRepositoryProvider = Provider<EventRepository>((ref) {
 final customerBalanceProvider =
     FutureProvider.family<int, String>((ref, customerId) async {
   final repo = ref.watch(eventRepositoryProvider);
-  return repo.computeBalance(customerId, 'CUSTOMER');
+  return repo.computeBalance(customerId, PartyType.customer);
 });
 
 // ---------------------------------------------------------------------------
@@ -42,7 +43,7 @@ final customerBalanceProvider =
 final customerEventsProvider =
     StreamProvider.family<List<Event>, String>((ref, customerId) {
   final repo = ref.watch(eventRepositoryProvider);
-  return repo.watchEvents(customerId, 'CUSTOMER');
+  return repo.watchEvents(customerId, PartyType.customer);
 });
 
 // ---------------------------------------------------------------------------
@@ -52,7 +53,7 @@ final customerEventsProvider =
 final supplierBalanceProvider =
     FutureProvider.family<int, String>((ref, supplierId) async {
   final repo = ref.watch(eventRepositoryProvider);
-  return repo.computeBalance(supplierId, 'SUPPLIER');
+  return repo.computeBalance(supplierId, PartyType.supplier);
 });
 
 // ---------------------------------------------------------------------------
@@ -62,5 +63,5 @@ final supplierBalanceProvider =
 final supplierEventsProvider =
     StreamProvider.family<List<Event>, String>((ref, supplierId) {
   final repo = ref.watch(eventRepositoryProvider);
-  return repo.watchEvents(supplierId, 'SUPPLIER');
+  return repo.watchEvents(supplierId, PartyType.supplier);
 });
