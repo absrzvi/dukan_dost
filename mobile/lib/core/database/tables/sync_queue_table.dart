@@ -18,6 +18,9 @@ class SyncQueue extends Table {
   /// Unix epoch millis of last sync attempt
   IntColumn get lastAttemptAt => integer().nullable()();
 
+  /// JSON payload for this event (stored for sync worker)
+  TextColumn get payload => text().nullable()();
+
   /// When queued (unix epoch millis)
   IntColumn get createdAt => integer()();
 }

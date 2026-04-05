@@ -17,6 +17,7 @@ class _WalkthroughScreenState extends ConsumerState<WalkthroughScreen> {
   final _pageController = PageController();
   int _currentPage = 0;
 
+  // TODO STORY-008: Replace with guided transaction walkthrough once credit entry is built
   static const _steps = [
     _WalkthroughStep(
       color: Color(0xFFE8F5E9),

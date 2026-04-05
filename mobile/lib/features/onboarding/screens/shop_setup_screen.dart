@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
@@ -39,22 +40,28 @@ class _ShopSetupScreenState extends ConsumerState<ShopSetupScreen> {
     notifier.setName(name);
     notifier.setLocality(locality);
 
-    // Write to local DB first, then fire network call async (do NOT await for navigation)
     final repo = ref.read(shopRepositoryProvider);
-    unawaited(
-      repo.updateShopProfile(
-        shopId: shopId,
-        name: name,
-        locality: locality.isEmpty ? null : locality,
-      ),
+
+    // 1. Await the local Drift write — offline-first guarantee
+    await repo.updateShopProfileLocal(
+      shopId: shopId,
+      name: name,
+      locality: locality.isEmpty ? null : locality,
     );
 
-    // Navigate immediately — offline-first
+    // 2. Navigate immediately after local write
     if (mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const ContactImportScreen()),
       );
     }
+
+    // 3. Fire network sync without blocking navigation
+    unawaited(repo.syncProfileUpdate(
+      shopId: shopId,
+      name: name,
+      locality: locality.isEmpty ? null : locality,
+    ));
   }
 
   @override
@@ -89,7 +96,7 @@ class _ShopSetupScreenState extends ConsumerState<ShopSetupScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'اپنی دکان کی تفصیل درج کریں',
+                  AppStrings.shopSetupSubtitle,
                   textAlign: TextAlign.right,
                   textDirection: TextDirection.rtl,
                   style: TextStyle(
@@ -107,7 +114,7 @@ class _ShopSetupScreenState extends ConsumerState<ShopSetupScreen> {
                   onChanged: (v) => ref.read(shopSetupProvider.notifier).setName(v),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'دکان کا نام ضروری ہے';
+                      return AppStrings.shopNameRequired;
                     }
                     return null;
                   },
@@ -137,7 +144,7 @@ class _ShopSetupScreenState extends ConsumerState<ShopSetupScreen> {
                   onChanged: (v) =>
                       ref.read(shopSetupProvider.notifier).setLocality(v),
                   decoration: InputDecoration(
-                    labelText: '${AppStrings.locality} (اختیاری)',
+                    labelText: '${AppStrings.locality} ${AppStrings.optional}',
                     labelStyle: const TextStyle(color: AppColors.textSecondary),
                     counterText: '',
                     border: OutlineInputBorder(
@@ -202,6 +209,3 @@ class _ShopSetupScreenState extends ConsumerState<ShopSetupScreen> {
     );
   }
 }
-
-// Utility — suppress unawaited future lint
-void unawaited(Future<void> future) {}

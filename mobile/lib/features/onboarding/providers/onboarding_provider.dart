@@ -78,7 +78,7 @@ final shopSetupProvider =
 // Contact import — fetches device contacts
 // ---------------------------------------------------------------------------
 
-final contactImportProvider = FutureProvider<List<Contact>>((ref) async {
+final contactImportProvider = FutureProvider.autoDispose<List<Contact>>((ref) async {
   // Request permission before fetching
   final granted = await FlutterContacts.requestPermission(readonly: true);
   if (!granted) return [];

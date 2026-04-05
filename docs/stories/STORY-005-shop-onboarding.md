@@ -1,5 +1,5 @@
 # STORY-005: Shop Onboarding (Name, Locality, Contact Import, First Transaction)
-Status: TODO
+Status: PARTIAL - AC6/AC7 deferred to STORY-008
 Sprint: 2
 Points: 5
 
@@ -37,6 +37,9 @@ Shop name and locality are written to the local Drift `Shops` table immediately 
 
 ## Dependencies
 - STORY-004 (OTP auth must be complete; `is_new_shop` flag drives navigation into onboarding)
+
+## Known Deferrals
+- AC6/AC7: The walkthrough currently shows informational slides only (3 steps describing credit entry flow). A guided, interactive transaction walkthrough requiring a real credit transaction save is deferred to STORY-008 once the credit entry feature is built.
 
 ## Definition of Done
 - [ ] All ACs passing

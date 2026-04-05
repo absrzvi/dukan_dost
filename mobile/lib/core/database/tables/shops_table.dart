@@ -29,6 +29,10 @@ class Shops extends Table {
   /// Row creation time (unix epoch millis)
   IntColumn get createdAt => integer()();
 
+  /// Whether onboarding has been completed (0 = no, 1 = yes)
+  IntColumn get hasCompletedOnboarding =>
+      integer().withDefault(const Constant(0))();
+
   /// Last modification time (unix epoch millis)
   IntColumn get updatedAt => integer()();
 

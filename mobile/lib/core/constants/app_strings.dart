@@ -33,6 +33,15 @@ class AppStrings {
   static const String searchContactsRoman = 'Contacts talaash karein';
   static const String continueText = 'جاری رکھیں';
   static const String continueTextRoman = 'Jaari rakhein';
+  static const String shopSetupSubtitle = 'اپنی دکان کی تفصیل درج کریں';
+  static const String shopNameRequired = 'دکان کا نام ضروری ہے';
+  static const String contactsLoadError = 'رابطے نہیں مل سکے';
+  static const String contactImportRationale =
+      'اپنے موبائل کے رابطے گاہکوں میں شامل کریں تاکہ آسانی سے ڈھونڈ سکیں';
+  static const String noContactsFound = 'کوئی رابطہ نہیں ملا';
+  static const String unknownContact = 'نامعلوم';
+  static const String optional = '(اختیاری)';
+
   // Onboarding walkthrough
   static const String walkthroughStep1Title = 'اپنا گاہک چنیں';
   static const String walkthroughStep1Subtitle = 'فہرست سے گاہک منتخب کریں یا نیا شامل کریں';

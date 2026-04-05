@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/database/app_database.dart';
+import '../../../core/utils/phone_normaliser.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/onboarding_provider.dart';
 import 'walkthrough_screen.dart';
@@ -52,26 +54,31 @@ class _ContactImportScreenState extends ConsumerState<ContactImportScreen> {
     final selected = allContacts.where((c) => _selectedIds.contains(c.id)).toList();
 
     for (final contact in selected) {
-      final phone = contact.phones.isNotEmpty
-          ? contact.phones.first.number.replaceAll(' ', '')
+      final rawPhone = contact.phones.isNotEmpty
+          ? contact.phones.first.number
           : null;
+      final phone = PhoneNormaliser.normalise(rawPhone);
 
-      // Check for duplicate: same phone+shop_id
+      // Check for duplicate: same normalised phone + shop_id
       if (phone != null && phone.isNotEmpty) {
         final existing = await (db.select(db.customers)
               ..where((c) =>
-                  c.shopId.equals(shopId) & c.phone.equals(phone) & c.isDeleted.equals(0)))
+                  c.shopId.equals(shopId) &
+                  c.phone.equals(phone) &
+                  c.isDeleted.equals(0)))
             .getSingleOrNull();
         if (existing != null) continue;
       }
 
       final customerId = uuid.v4();
+      final customerName = contact.displayName.isNotEmpty
+          ? contact.displayName
+          : (phone ?? AppStrings.unknownContact);
+
       await db.into(db.customers).insert(CustomersCompanion(
             id: Value(customerId),
             shopId: Value(shopId),
-            name: Value(contact.displayName.isNotEmpty
-                ? contact.displayName
-                : (phone ?? 'نامعلوم')),
+            name: Value(customerName),
             phone: Value(phone),
             isFlagged: const Value(0),
             createdAt: Value(now),
@@ -79,11 +86,19 @@ class _ContactImportScreenState extends ConsumerState<ContactImportScreen> {
             isDeleted: const Value(0),
           ));
 
-      // Enqueue sync
+      // Enqueue sync with payload
+      final payload = jsonEncode({
+        'id': customerId,
+        'name': customerName,
+        'phone': phone,
+        'shop_id': shopId,
+      });
+
       await db.into(db.syncQueue).insert(SyncQueueCompanion(
             eventId: Value('CUSTOMER_CREATE_$customerId'),
             status: const Value('PENDING'),
             retryCount: const Value(0),
+            payload: Value(payload),
             createdAt: Value(now),
           ));
     }
@@ -133,7 +148,7 @@ class _ContactImportScreenState extends ConsumerState<ContactImportScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'رابطے نہیں مل سکے',
+                  AppStrings.contactsLoadError,
                   textDirection: TextDirection.rtl,
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
                 ),
@@ -159,7 +174,7 @@ class _ContactImportScreenState extends ConsumerState<ContactImportScreen> {
                   child: Column(
                     children: [
                       const Text(
-                        'اپنے موبائل کے رابطے گاہکوں میں شامل کریں تاکہ آسانی سے ڈھونڈ سکیں',
+                        AppStrings.contactImportRationale,
                         textDirection: TextDirection.rtl,
                         textAlign: TextAlign.right,
                         style: TextStyle(
@@ -192,7 +207,7 @@ class _ContactImportScreenState extends ConsumerState<ContactImportScreen> {
                   child: filtered.isEmpty
                       ? const Center(
                           child: Text(
-                            'کوئی رابطہ نہیں ملا',
+                            AppStrings.noContactsFound,
                             textDirection: TextDirection.rtl,
                             style: TextStyle(color: AppColors.textSecondary),
                           ),
