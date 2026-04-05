@@ -189,4 +189,20 @@ class AppStrings {
   static const String flagConfirmed = 'نشان لگا دیا گیا';
   static const String unflagConfirmed = 'نشان ہٹا دیا گیا';
   static const String thankYouShop = 'شکریہ —';
+
+  // STORY-011: Reminder template selector labels
+  static const String reminderGentleLabel = 'نرم یاد دہانی';
+  static const String reminderFirmLabel = 'سخت یاد دہانی';
+  static const String reminderFinalLabel = 'آخری یاد دہانی';
+  static const String reminderSentSuccess = 'یاد دہانی بھیجی گئی';
+  static const String noPhoneSmsComingSoon = 'فون نمبر نہیں — SMS جلد آئے گا';
+  static const String sendViaWhatsapp = 'واٹس ایپ بھیجیں';
+
+  // STORY-011: Full message templates (placeholders: {name}, {amount}, {days}, {shopName})
+  static const String gentleTemplate =
+      'السلام علیکم {name} بھائی! آپ کا {amount} کا ادھار باقی ہے۔ جب آسانی ہو ادا کر دیں۔ شکریہ — {shopName}';
+  static const String firmTemplate =
+      'السلام علیکم {name} بھائی! آپ کا {amount} کا ادھار {days} دن سے باقی ہے۔ براہ کرم جلد ادا کریں — {shopName}';
+  static const String finalTemplate =
+      'السلام علیکم {name} بھائی! آپ کا {amount} کا ادھار {days} دن سے باقی ہے۔ یہ آخری یاد دہانی ہے — {shopName}';
 }

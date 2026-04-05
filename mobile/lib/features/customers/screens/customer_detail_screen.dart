@@ -14,6 +14,8 @@ import '../../transactions/screens/credit_entry_screen.dart';
 import '../../transactions/screens/payment_entry_screen.dart';
 import '../providers/customers_provider.dart';
 import '../widgets/event_bubble.dart';
+import '../../reminders/services/reminder_service.dart';
+import '../../reminders/widgets/reminder_template_sheet.dart';
 
 /// Customer detail screen — chat-thread style transaction history.
 ///
@@ -59,19 +61,7 @@ class CustomerDetailScreen extends ConsumerWidget {
         ) ??
         0;
 
-    // Derive last reminder date from events stream
-    final lastReminderTs = eventsAsync.whenOrNull(
-      data: (events) {
-        for (int i = events.length - 1; i >= 0; i--) {
-          if (events[i].eventType == EventType.reminderSent) {
-            return events[i].deviceTimestamp;
-          }
-        }
-        return null;
-      },
-    );
-
-    // Derive daysOverdue for popup reminder (MAJOR-2)
+    // Derive days overdue from last CREDIT event
     final daysOverdue = eventsAsync.whenOrNull(
           data: (events) {
             int? lastCreditTs;
@@ -90,6 +80,18 @@ class CustomerDetailScreen extends ConsumerWidget {
           },
         ) ??
         0;
+
+    // Derive last reminder date from events stream
+    final lastReminderTs = eventsAsync.whenOrNull(
+      data: (events) {
+        for (int i = events.length - 1; i >= 0; i--) {
+          if (events[i].eventType == EventType.reminderSent) {
+            return events[i].deviceTimestamp;
+          }
+        }
+        return null;
+      },
+    );
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -151,6 +153,8 @@ class CustomerDetailScreen extends ConsumerWidget {
               customerId: customerId,
               customerName: customerName,
               customerPhone: customerPhone,
+              balancePaisa: balancePaisa,
+              daysOverdue: daysOverdue,
             ),
           ],
         ),
@@ -225,19 +229,41 @@ class _BalanceHeader extends StatelessWidget {
 // Bottom action bar
 // ---------------------------------------------------------------------------
 
-class _BottomActionBar extends StatelessWidget {
+class _BottomActionBar extends ConsumerWidget {
   const _BottomActionBar({
     required this.customerId,
     required this.customerName,
     this.customerPhone,
+    this.balancePaisa = 0,
+    this.daysOverdue = 0,
   });
 
   final String customerId;
   final String customerName;
   final String? customerPhone;
+  final int balancePaisa;
+  final int daysOverdue;
+
+  Future<void> _showReminderSheet(BuildContext context) async {
+    final result = await showReminderTemplateSheet(
+      context,
+      customerId: customerId,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      balancePaisa: balancePaisa,
+      daysOverdue: daysOverdue,
+    );
+    if (!context.mounted || result == null) return;
+    final msg = result == ReminderResult.sentViaWhatsApp
+        ? AppStrings.reminderSentSuccess
+        : result == ReminderResult.noPhone
+            ? AppStrings.noPhoneSmsComingSoon
+            : AppStrings.reminderSentSuccess;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       color: AppColors.surface,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -314,23 +340,7 @@ class _BottomActionBar extends StatelessWidget {
                 AppStrings.reminderButton,
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
-              onPressed: () {
-                // MAJOR-1: guard on null phone
-                if (customerPhone == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(AppStrings.noPhoneForWhatsApp),
-                    ),
-                  );
-                  return;
-                }
-                // TODO STORY-011: Replace with WhatsApp reminder flow
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(AppStrings.reminderComingSoon),
-                  ),
-                );
-              },
+              onPressed: () => _showReminderSheet(context),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.reminderAmber,
                 side: const BorderSide(color: AppColors.reminderAmber),
@@ -505,20 +515,24 @@ class _DetailPopupMenu extends ConsumerWidget {
           case 'flag':
             await _toggleFlag(context, ref);
           case 'reminder':
-            // MAJOR-1: guard on null phone
-            if (!hasPhone) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(AppStrings.noPhoneForWhatsApp),
-                ),
+            {
+              final result = await showReminderTemplateSheet(
+                context,
+                customerId: customerId,
+                customerName: customerName,
+                customerPhone: customerPhone,
+                balancePaisa: balancePaisa,
+                daysOverdue: daysOverdue,
               );
-            } else {
-              // TODO STORY-011: Replace with WhatsApp reminder flow
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(AppStrings.reminderComingSoon),
-                ),
-              );
+              if (context.mounted && result != null) {
+                final msg = result == ReminderResult.sentViaWhatsApp
+                    ? AppStrings.reminderSentSuccess
+                    : result == ReminderResult.noPhone
+                        ? AppStrings.noPhoneSmsComingSoon
+                        : AppStrings.reminderSentSuccess;
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(msg)));
+              }
             }
           case 'share':
             // IMPORTANT-1: pass pre-computed balancePaisa
