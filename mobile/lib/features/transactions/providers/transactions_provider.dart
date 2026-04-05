@@ -6,6 +6,16 @@ import '../../../core/providers/database_provider.dart';
 import '../repositories/event_repository.dart';
 
 // ---------------------------------------------------------------------------
+// Current shop ID provider — reads the first shop from the local Shops table.
+// ---------------------------------------------------------------------------
+
+final currentShopIdProvider = FutureProvider<String?>((ref) async {
+  final db = ref.watch(appDatabaseProvider);
+  final shop = await db.select(db.shops).getSingleOrNull();
+  return shop?.id;
+});
+
+// ---------------------------------------------------------------------------
 // EventRepository provider
 // ---------------------------------------------------------------------------
 

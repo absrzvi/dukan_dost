@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/amount_formatter.dart';
+import '../../transactions/screens/credit_entry_screen.dart';
 import '../models/customer_with_balance.dart';
 import '../providers/customers_provider.dart';
 import '../widgets/add_customer_sheet.dart';
@@ -162,9 +163,15 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
   }
 
   void _navigateToDetail(BuildContext context, CustomerWithBalance item) {
-    // STORY-010 stub: navigate to customer detail
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(item.customer.name)),
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => CreditEntryScreen(
+          customerId: item.customer.id,
+          customerName: item.customer.name,
+          customerPhone: item.customer.phone,
+        ),
+      ),
     );
   }
 }
