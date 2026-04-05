@@ -9,21 +9,28 @@ import 'tables/suppliers_table.dart';
 import 'tables/sync_queue_table.dart';
 import 'tables/shops_table.dart';
 import 'tables/backups_table.dart';
+import 'daos/events_dao.dart';
 
 // Generated file — run: flutter pub run build_runner build
 // ignore: uri_has_not_been_generated
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [
-  Events,
-  Customers,
-  Suppliers,
-  SyncQueue,
-  Shops,
-  Backups,
-])
+@DriftDatabase(
+  tables: [
+    Events,
+    Customers,
+    Suppliers,
+    SyncQueue,
+    Shops,
+    Backups,
+  ],
+  daos: [EventsDao],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+
+  /// Testing constructor — accepts any [QueryExecutor], e.g. NativeDatabase.memory().
+  AppDatabase.forTesting(super.executor);
 
   @override
   // ignore: override_on_non_overriding_member
