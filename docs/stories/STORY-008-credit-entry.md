@@ -1,5 +1,5 @@
 # STORY-008: Credit Entry (Record a Udhaar / Credit Transaction)
-Status: TODO
+Status: PARTIAL - AC11 (voice note) deferred to STORY-010
 Sprint: 3
 Points: 5
 

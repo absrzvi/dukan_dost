@@ -58,6 +58,20 @@ class AppStrings {
   static const String netPosition = 'خالص';
   static const String netPositionRoman = 'Kul position';
 
+  // Credit Entry
+  static const String creditEntry = 'ادھار لکھیں';
+  static const String saveButton = 'محفوظ کریں';
+  static const String addNote = 'نوٹ شامل کریں';
+  static const String hisaabSaaf = 'حساب صاف!';
+  static const String hisaabSaafSubtitle = 'بقایا صفر ہو گیا!';
+  static const String creditSaved = 'ادھار محفوظ';
+  static const String whatsappNotify = 'واٹس ایپ';
+  static const String currentBalance = 'موجودہ بقایا';
+  static const String shopNotFound = 'دکان نہیں ملی';
+  static const String saveError = 'محفوظ کرنے میں خرابی — دوبارہ کوشش کریں';
+  static const String whatsappCreditTemplate =
+      'السلام علیکم! آپ کا ادھار محفوظ ہو گیا۔ ادھار: {amount}۔ شکریہ — {shopName}';
+
   // Transactions
   static const String udhaar = 'ادھار';
   static const String udhaarRoman = 'Udhaar';
@@ -67,7 +81,6 @@ class AppStrings {
   static const String amountRoman = 'Raqam';
   static const String save = 'محفوظ کریں';
   static const String saveRoman = 'Mehfooz karein';
-  static const String hisaabSaaf = 'حساب صاف';
   static const String hisaabSaafRoman = 'Hisaab saaf';
   static const String hisaabSaafMessage = 'اس گاہک کا حساب صاف ہو گیا';
   static const String hisaabSaafMessageRoman = 'Is grahak ka hisaab saaf ho gaya';
