@@ -82,7 +82,9 @@ class AppStrings {
   static const String maxAmount = 'زیادہ سے زیادہ';
   static const String amountExceedsBalance = 'رقم بقایا سے زیادہ ہے';
   static const String whatsappPaymentTemplate =
-      'السلام علیکم! آپ کی ادائیگی PKR {amount} محفوظ ہو گئی۔ باقی بقایا: {remaining}۔ شکریہ — {shopName}';
+      'السلام علیکم {name} بھائی! آپ کی ادائیگی PKR {amount} محفوظ ہو گئی۔ باقی بقایا: {remaining}۔ شکریہ — {shopName}';
+  static const String whatsappHisaabSaafTemplate =
+      'السلام علیکم {name} بھائی! آپ کا حساب صاف ہو گیا۔ PKR {amount} ادا ہو گئی۔ شکریہ — {shopName}';
 
   // Transactions
   static const String udhaar = 'ادھار';

@@ -123,7 +123,7 @@ void main() {
       await tester.tap(find.text('0'));
       await tester.pump();
 
-      // Save button should be ENABLED (overpayment is now allowed per story spec)
+      // Save button should be ENABLED (overpayment allowed — excess treated as advance credit per product decision)
       final saveButton =
           find.widgetWithText(ElevatedButton, AppStrings.saveButton);
       expect(saveButton, findsOneWidget);
@@ -391,25 +391,115 @@ void main() {
       // Overpayment snackbar should be shown
       expect(find.text(AppStrings.overpaymentWarning), findsOneWidget);
     });
-  });
+
+    testWidgets(
+        'customerBalanceProvider is invalidated after successful save so '
+        'previous screen sees updated balance', (tester) async {
+      final db = _makeDb();
+      addTearDown(db.close);
+
+      const shopId = 'shop-001';
+      const customerId = 'cust-invalidate-test';
+      final repo = EventRepository(database: db);
+      // Seed PKR 200 = 20000 paisa credit so balance starts at 20000
+      await repo.addEvent(
+        shopId: shopId,
+        eventType: EventType.credit,
+        partyType: PartyType.customer,
+        partyId: customerId,
+        amountPaisa: 20000,
+        deviceId: 'dev-001',
+      );
+
+      // Use a real ProviderContainer to observe the balance provider lifecycle
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          currentShopIdProvider.overrideWith((ref) async => shopId),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // Prime the cache — read the balance once so it is populated
+      final balanceBefore =
+          await container.read(customerBalanceProvider(customerId).future);
+      expect(balanceBefore, 20000);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: PaymentEntryScreen(
+              customerId: customerId,
+              customerName: 'ری فریش ٹیسٹ گاہک',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Pay PKR 100 = 10000 paisa
+      await tester.tap(find.text('1'));
+      await tester.pump();
+      await tester.tap(find.text('0'));
+      await tester.pump();
+      await tester.tap(find.text('0'));
+      await tester.pump();
+
+      await tester.ensureVisible(
+          find.widgetWithText(ElevatedButton, AppStrings.saveButton));
+      await tester.pump();
+      await tester.tap(
+          find.widgetWithText(ElevatedButton, AppStrings.saveButton),
+          warnIfMissed: false);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // After save the provider should have been invalidated; re-reading it
+      // from the container returns the new computed value (10000 = PKR 100).
+      final balanceAfter =
+          await container.read(customerBalanceProvider(customerId).future);
+      expect(balanceAfter, 10000);
+    });
+  }); // end PaymentEntryScreen group
 
   // ---------------------------------------------------------------------------
   // WhatsApp template substitution unit test
   // ---------------------------------------------------------------------------
 
   group('WhatsApp payment template', () {
-    test('substitution produces correct message', () {
+    test('substitution produces correct message including customer name', () {
       const template = AppStrings.whatsappPaymentTemplate;
       final message = template
+          .replaceAll('{name}', 'علی بھائی')
           .replaceAll('{amount}', 'PKR 100')
           .replaceAll('{remaining}', 'PKR 50')
           .replaceAll('{shopName}', 'راشد اسٹور');
 
+      expect(message, contains('علی بھائی'));
       expect(message, contains('PKR 100'));
       expect(message, contains('PKR 50'));
       expect(message, contains('راشد اسٹور'));
+      expect(message, isNot(contains('{name}')));
       expect(message, isNot(contains('{amount}')));
       expect(message, isNot(contains('{remaining}')));
+      expect(message, isNot(contains('{shopName}')));
+    });
+
+    test('hisaab saaf template substitution produces correct message', () {
+      const template = AppStrings.whatsappHisaabSaafTemplate;
+      final message = template
+          .replaceAll('{name}', 'علی بھائی')
+          .replaceAll('{amount}', 'PKR 100')
+          .replaceAll('{shopName}', 'راشد اسٹور');
+
+      expect(message, contains('علی بھائی'));
+      expect(message, contains('PKR 100'));
+      expect(message, contains('راشد اسٹور'));
+      expect(message, isNot(contains('{name}')));
+      expect(message, isNot(contains('{amount}')));
       expect(message, isNot(contains('{shopName}')));
     });
   });

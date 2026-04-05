@@ -89,20 +89,29 @@ class _PaymentEntryScreenState extends ConsumerState<PaymentEntryScreen> {
       if (!mounted) return;
 
       if (newBalance == 0) {
-        // Full-screen celebration overlay
-        showDialog<void>(
+        // Full-screen celebration overlay — awaited so we can show WhatsApp
+        // prompt BEFORE popping the screen (AC9).
+        await showDialog<void>(
           context: context,
           barrierDismissible: false,
           builder: (_) => const HisaabSaafOverlay(),
         );
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted) {
-            Navigator.of(context).pop(); // pop dialog
-            Navigator.of(context).pop(); // pop screen
-          }
-        });
+        if (!mounted) return;
+        if (widget.customerPhone != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(AppStrings.hisaabSaaf),
+              action: SnackBarAction(
+                label: AppStrings.whatsappNotify,
+                textColor: Colors.white,
+                onPressed: () => _sendWhatsAppHisaabSaaf(shopId: shopId),
+              ),
+            ),
+          );
+        }
+        if (mounted) Navigator.of(context).pop(); // pop screen
       } else if (newBalance < 0) {
-        // Overpayment — balance went negative
+        // Overpayment allowed — excess treated as advance credit. Negative balance = shop owes customer.
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: AppColors.accent,
@@ -165,8 +174,25 @@ class _PaymentEntryScreenState extends ConsumerState<PaymentEntryScreen> {
     final shopName = shop?.name ?? '';
 
     final message = AppStrings.whatsappPaymentTemplate
+        .replaceAll('{name}', widget.customerName)
         .replaceAll('{amount}', AmountFormatter.format(_amountPaisa))
         .replaceAll('{remaining}', AmountFormatter.format(newBalance))
+        .replaceAll('{shopName}', shopName);
+
+    await WhatsAppHelper.sendMessage(phone: phone, message: message);
+  }
+
+  Future<void> _sendWhatsAppHisaabSaaf({required String shopId}) async {
+    final phone = widget.customerPhone;
+    if (phone == null) return;
+
+    final db = ref.read(appDatabaseProvider);
+    final shop = await db.select(db.shops).getSingleOrNull();
+    final shopName = shop?.name ?? '';
+
+    final message = AppStrings.whatsappHisaabSaafTemplate
+        .replaceAll('{name}', widget.customerName)
+        .replaceAll('{amount}', AmountFormatter.format(_amountPaisa))
         .replaceAll('{shopName}', shopName);
 
     await WhatsAppHelper.sendMessage(phone: phone, message: message);
