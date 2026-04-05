@@ -37,6 +37,7 @@ final eventRepositoryProvider = Provider<EventRepository>((ref) {
 // ---------------------------------------------------------------------------
 // Balance provider — FutureProvider.family
 // Returns the computed balance (int paisa) for a customer.
+// TODO: migrate to autoDispose (MINOR-2 / STORY-010)
 // ---------------------------------------------------------------------------
 
 final customerBalanceProvider =
@@ -48,6 +49,7 @@ final customerBalanceProvider =
 // ---------------------------------------------------------------------------
 // Events stream provider — StreamProvider.family
 // Watches all events for a customer ordered by deviceTimestamp DESC.
+// TODO: migrate to autoDispose (MINOR-2 / STORY-010)
 // ---------------------------------------------------------------------------
 
 final customerEventsProvider =

@@ -224,4 +224,79 @@ void main() {
     expect(find.byKey(const Key('credit_button')), findsOneWidget);
     expect(find.byKey(const Key('payment_button')), findsOneWidget);
   });
+
+  // -------------------------------------------------------------------------
+  // 7. REVERSAL event bubble renders with strikethrough decoration
+  // -------------------------------------------------------------------------
+  testWidgets('REVERSAL event bubble renders with strikethrough', (tester) async {
+    final db = _makeDb();
+    addTearDown(db.close);
+    final customerId = await _seedShopAndCustomer(db);
+
+    // Seed a credit first, then a reversal
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.eventsDao.insertEvent(
+      id: 'evt-credit-rev',
+      shopId: 'shop-test-001',
+      eventType: EventType.credit,
+      partyType: PartyType.customer,
+      partyId: customerId,
+      amountPaisa: 50000,
+      deviceId: 'test-device',
+      deviceTimestamp: now,
+    );
+    await db.eventsDao.insertEvent(
+      id: 'evt-reversal-001',
+      shopId: 'shop-test-001',
+      eventType: EventType.reversal,
+      partyType: PartyType.customer,
+      partyId: customerId,
+      amountPaisa: 50000,
+      deviceId: 'test-device',
+      deviceTimestamp: now + 1,
+    );
+
+    await tester.pumpWidget(_buildScreen(db, customerId: customerId));
+    await tester.pumpAndSettle();
+
+    final strikeThroughFinder = find.byWidgetPredicate(
+      (w) =>
+          w is Text &&
+          w.style != null &&
+          w.style!.decoration == TextDecoration.lineThrough,
+    );
+    expect(strikeThroughFinder, findsAtLeastNWidgets(1));
+  });
+
+  // -------------------------------------------------------------------------
+  // 8. Reminder button is present in the bottom action bar
+  // -------------------------------------------------------------------------
+  testWidgets('reminder button is present in bottom action bar', (tester) async {
+    final db = _makeDb();
+    addTearDown(db.close);
+    await _seedShopAndCustomer(db);
+
+    await tester.pumpWidget(_buildScreen(db));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('reminder_button')), findsOneWidget);
+  });
+
+  // -------------------------------------------------------------------------
+  // 9. No-phone SnackBar shown when customerPhone is null and reminder tapped
+  // -------------------------------------------------------------------------
+  testWidgets('shows noPhoneForWhatsApp snackbar when phone is null and reminder tapped',
+      (tester) async {
+    final db = _makeDb();
+    addTearDown(db.close);
+    await _seedShopAndCustomer(db);
+
+    await tester.pumpWidget(_buildScreen(db, customerPhone: null));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('reminder_button')));
+    await tester.pump();
+
+    expect(find.text(AppStrings.noPhoneForWhatsApp), findsOneWidget);
+  });
 }

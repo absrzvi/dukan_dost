@@ -7,6 +7,31 @@ import '../../../core/database/app_database.dart';
 import '../../../core/utils/amount_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 
+// ---------------------------------------------------------------------------
+// Voice note play button helper
+// ---------------------------------------------------------------------------
+
+class _VoiceNotePlayButton extends StatelessWidget {
+  const _VoiceNotePlayButton();
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO STORY-010: Implement actual audio playback
+    return IconButton(
+      icon: const Icon(Icons.play_circle_outline, size: 24),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+      onPressed: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(AppStrings.voiceNoteComingSoon),
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// Chat-bubble widget that renders a single [Event] in the customer detail
 /// chat-thread view.
 ///
@@ -56,14 +81,14 @@ class _CreditBubble extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFECEFF1), // blue-grey[50]
+          color: AppColors.creditBubbleBg,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(16),
             topRight: Radius.circular(4),
             bottomLeft: Radius.circular(16),
             bottomRight: Radius.circular(16),
           ),
-          border: Border.all(color: const Color(0xFFB0BEC5)),
+          border: Border.all(color: AppColors.creditBubbleBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -101,6 +126,12 @@ class _CreditBubble extends StatelessWidget {
                   ),
                   textAlign: TextAlign.end,
                 ),
+              ),
+            // Voice note playback
+            if (event.voiceNotePath != null)
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: _VoiceNotePlayButton(),
               ),
             // Timestamp
             const SizedBox(height: 4),
@@ -178,6 +209,12 @@ class _PaymentBubble extends StatelessWidget {
                   ),
                 ),
               ),
+            // Voice note playback
+            if (event.voiceNotePath != null)
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: _VoiceNotePlayButton(),
+              ),
             const SizedBox(height: 4),
             Text(
               DateFormatter.formatDateTime(event.deviceTimestamp),
@@ -208,7 +245,7 @@ class _ReversalBubble extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFFEEEEEE),
+          color: AppColors.reversalBubbleBg,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(

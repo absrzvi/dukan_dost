@@ -179,4 +179,13 @@ class AppStrings {
   static const String reversalEvent = 'واپسی';
   static const String creditLabel = 'ادھار';
   static const String paymentLabel = 'ادائیگی';
+
+  // STORY-010 additions
+  static const String lastReminder = 'آخری یاد دہانی';
+  static const String reminderButton = 'یاد دہانی';
+  static const String reminderComingSoon = 'یہ فیچر جلد آئے گا';
+  static const String voiceNoteComingSoon = 'وائس نوٹ جلد آئے گا';
+  static const String noPhoneForWhatsApp = 'واٹس ایپ کے لیے فون نمبر ضروری ہے';
+  static const String flagConfirmed = 'نشان لگا دیا گیا';
+  static const String unflagConfirmed = 'نشان ہٹا دیا گیا';
 }
