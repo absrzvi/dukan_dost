@@ -37,6 +37,7 @@ final eventRepositoryProvider = Provider<EventRepository>((ref) {
 // ---------------------------------------------------------------------------
 // Balance provider — FutureProvider.family
 // Returns the computed balance (int paisa) for a customer.
+// TODO: migrate to autoDispose (MINOR-2 / STORY-010)
 // ---------------------------------------------------------------------------
 
 final customerBalanceProvider =
@@ -48,10 +49,23 @@ final customerBalanceProvider =
 // ---------------------------------------------------------------------------
 // Events stream provider — StreamProvider.family
 // Watches all events for a customer ordered by deviceTimestamp DESC.
+// TODO: migrate to autoDispose (MINOR-2 / STORY-010)
 // ---------------------------------------------------------------------------
 
 final customerEventsProvider =
     StreamProvider.family<List<Event>, String>((ref, customerId) {
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.watchEvents(customerId, PartyType.customer);
+});
+
+// ---------------------------------------------------------------------------
+// Customer events stream provider — autoDispose family (STORY-010)
+// Watches events for a customer in ASC order (oldest first) for chat thread.
+// ---------------------------------------------------------------------------
+
+final customerEventsStreamProvider =
+    StreamProvider.autoDispose.family<List<Event>, String>(
+        (ref, customerId) {
   final repo = ref.watch(eventRepositoryProvider);
   return repo.watchEvents(customerId, PartyType.customer);
 });

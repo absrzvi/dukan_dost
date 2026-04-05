@@ -7,6 +7,7 @@ import '../../../core/utils/amount_formatter.dart';
 import '../../transactions/screens/credit_entry_screen.dart';
 import '../../transactions/screens/payment_entry_screen.dart';
 import '../models/customer_with_balance.dart';
+import 'customer_detail_screen.dart';
 import '../providers/customers_provider.dart';
 import '../widgets/add_customer_sheet.dart';
 import '../widgets/customer_list_tile.dart';
@@ -169,7 +170,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
     Navigator.push(
       context,
       MaterialPageRoute<void>(
-        builder: (_) => CreditEntryScreen(
+        builder: (_) => CustomerDetailScreen(
           customerId: item.customer.id,
           customerName: item.customer.name,
           customerPhone: item.customer.phone,

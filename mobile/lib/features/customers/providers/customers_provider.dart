@@ -93,6 +93,14 @@ final filteredCustomersProvider =
   return [...flagged, ...unflagged];
 });
 
+/// Flag state for a single customer — autoDispose so it cleans up with the screen.
+final customerFlagProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, customerId) async {
+  final repo = ref.watch(customersRepositoryProvider);
+  final customer = await repo.getCustomer(customerId);
+  return customer?.isFlagged == 1;
+});
+
 /// Sum of all positive balances (customers who owe the shop) in paisa.
 final totalOwedProvider =
     Provider.autoDispose.family<int, String>((ref, shopId) {

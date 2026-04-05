@@ -30,4 +30,9 @@ class AppColors {
 
   // Offline indicator
   static const Color offlineBanner = Color(0xFFFF8F00);
+
+  // Event bubble colours (MINOR-1 / STORY-010)
+  static const Color creditBubbleBg = Color(0xFFECEFF1);
+  static const Color creditBubbleBorder = Color(0xFFB0BEC5);
+  static const Color reversalBubbleBg = Color(0xFFEEEEEE);
 }

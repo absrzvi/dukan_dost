@@ -166,4 +166,26 @@ class AppStrings {
   static const String historyShareRoman = 'History share karein';
   static const String baaki = 'باقی';
   static const String baakiRoman = 'Baaki';
+
+  // Customer detail (STORY-010)
+  static const String transactionHistory = 'لین دین کی تاریخ';
+  static const String reminderSent = 'یاد دہانی بھیجی گئی';
+  static const String shareHistory = 'تاریخ شیئر کریں';
+  static const String flagCustomer = 'نشان لگائیں';
+  static const String unflagCustomer = 'نشان ہٹائیں';
+  static const String deleteCustomer = 'گاہک حذف کریں';
+  static const String confirmDelete = 'کیا آپ واقعی حذف کرنا چاہتے ہیں؟';
+  static const String noTransactions = 'کوئی لین دین نہیں';
+  static const String reversalEvent = 'واپسی';
+  static const String creditLabel = 'ادھار';
+  static const String paymentLabel = 'ادائیگی';
+
+  // STORY-010 additions
+  static const String lastReminder = 'آخری یاد دہانی';
+  static const String reminderButton = 'یاد دہانی';
+  static const String reminderComingSoon = 'یہ فیچر جلد آئے گا';
+  static const String voiceNoteComingSoon = 'وائس نوٹ جلد آئے گا';
+  static const String noPhoneForWhatsApp = 'واٹس ایپ کے لیے فون نمبر ضروری ہے';
+  static const String flagConfirmed = 'نشان لگا دیا گیا';
+  static const String unflagConfirmed = 'نشان ہٹا دیا گیا';
 }
