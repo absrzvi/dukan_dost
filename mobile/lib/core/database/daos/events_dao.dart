@@ -178,6 +178,32 @@ class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
         .watch();
   }
 
+  /// Returns the most recent CREDIT event timestamp (epoch millis) for a
+  /// customer, or null if no CREDIT events exist.
+  /// Used to compute daysOverdue for the customer list.
+  Future<int?> lastCreditTimestamp(String partyId, String partyType) async {
+    final tsExpr = events.deviceTimestamp.max();
+    final query = selectOnly(events)
+      ..addColumns([tsExpr])
+      ..where(events.partyId.equals(partyId))
+      ..where(events.partyType.equals(partyType))
+      ..where(events.eventType.equals('CREDIT'));
+    final row = await query.getSingle();
+    return row.read(tsExpr);
+  }
+
+  /// Returns the most recent event timestamp (epoch millis) for a party across
+  /// all event types, or null if no events exist.
+  Future<int?> lastActivityTimestamp(String partyId, String partyType) async {
+    final tsExpr = events.deviceTimestamp.max();
+    final query = selectOnly(events)
+      ..addColumns([tsExpr])
+      ..where(events.partyId.equals(partyId))
+      ..where(events.partyType.equals(partyType));
+    final row = await query.getSingle();
+    return row.read(tsExpr);
+  }
+
   /// Stream of all events for a shop, ordered by deviceTimestamp descending.
   Stream<List<Event>> watchShopEvents(String shopId) {
     return (select(events)

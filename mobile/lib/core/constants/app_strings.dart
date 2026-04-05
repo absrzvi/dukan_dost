@@ -79,6 +79,27 @@ class AppStrings {
   static const String addCustomerRoman = 'Grahak shamil karein';
   static const String noPhone = 'فون نہیں';
   static const String noPhoneRoman = 'Phone nahin';
+  static const String totalOwed = 'کل واجب الادا';
+  static const String totalOwedRoman = 'Kul wajib ul ada';
+  static const String noCustomers = 'کوئی گاہک نہیں';
+  static const String noCustomersRoman = 'Koi grahak nahin';
+  static const String addCustomerNow = 'ابھی شامل کریں';
+  static const String addCustomerNowRoman = 'Abhi shamil karein';
+  static const String sortBy = 'ترتیب';
+  static const String sortByRoman = 'Tarteeb';
+  static const String flagged = 'نشان زدہ';
+  static const String flaggedRoman = 'Nishan zada';
+  static const String customerName = 'گاہک کا نام';
+  static const String customerNameRoman = 'Grahak ka naam';
+  static const String phoneNumber = 'فون نمبر';
+  static const String phoneNumberRoman = 'Phone number';
+  static const String customerNameRequired = 'گاہک کا نام ضروری ہے';
+  static const String cancel = 'منسوخ';
+  static const String cancelRoman = 'Mansookh';
+  static const String sortBalanceDesc = 'سب سے زیادہ باقی';
+  static const String sortBalanceAsc = 'سب سے کم باقی';
+  static const String sortNameAsc = 'نام (الف ب)';
+  static const String sortLastActivity = 'آخری سرگرمی';
 
   // Reminders
   static const String sendReminder = 'یاد دلائیں';

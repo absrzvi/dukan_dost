@@ -12,6 +12,11 @@ class AppColors {
   static const Color overdueRed = Color(0xFFB71C1C); // dark red — 7+ days overdue
   static const Color hisaabSaafGreen = Color(0xFF1B5E20); // celebration green
 
+  // Balance semantic colors
+  static const Color balancePositive = Color(0xFFD32F2F); // red — customer owes shop
+  static const Color balanceZero = Color(0xFF9E9E9E);     // grey — settled
+  static const Color balanceNegative = Color(0xFF2E7D32); // green — shop owes customer
+
   // Background
   static const Color background = Color(0xFFFAFAFA);
   static const Color surface = Color(0xFFFFFFFF);
