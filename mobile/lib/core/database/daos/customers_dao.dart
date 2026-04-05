@@ -18,6 +18,13 @@ class CustomersDao extends DatabaseAccessor<AppDatabase>
   // Streams
   // ---------------------------------------------------------------------------
 
+  /// Stream of a single non-deleted customer by id. Emits null if not found.
+  Stream<Customer?> watchCustomer(String customerId) {
+    return (select(customers)
+          ..where((c) => c.id.equals(customerId) & c.isDeleted.equals(0)))
+        .watchSingleOrNull();
+  }
+
   /// Stream of all non-deleted customers for a shop, ordered by name.
   Stream<List<Customer>> watchCustomers(String shopId) {
     return (select(customers)

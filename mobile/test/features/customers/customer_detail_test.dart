@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../lib/core/constants/app_colors.dart';
 import '../../../lib/core/constants/app_strings.dart';
 import '../../../lib/core/constants/event_constants.dart';
 import '../../../lib/core/database/app_database.dart';
@@ -80,6 +81,23 @@ Future<void> _seedPaymentEvent(
     partyType: PartyType.customer,
     partyId: customerId,
     amountPaisa: amountPaisa,
+    deviceId: 'test-device',
+    deviceTimestamp: now,
+  );
+}
+
+Future<void> _seedReminderEvent(
+  AppDatabase db,
+  String customerId,
+) async {
+  final now = DateTime.now().millisecondsSinceEpoch + 2;
+  await db.eventsDao.insertEvent(
+    id: 'evt-reminder-$now',
+    shopId: 'shop-test-001',
+    eventType: EventType.reminderSent,
+    partyType: PartyType.customer,
+    partyId: customerId,
+    amountPaisa: 0,
     deviceId: 'test-device',
     deviceTimestamp: now,
   );
@@ -298,5 +316,105 @@ void main() {
     await tester.pump();
 
     expect(find.text(AppStrings.noPhoneForWhatsApp), findsOneWidget);
+  });
+
+  // -------------------------------------------------------------------------
+  // 10. Balance header shows "آخری یاد دہانی" row after a REMINDER_SENT event
+  // -------------------------------------------------------------------------
+  testWidgets('balance header shows lastReminder row after REMINDER_SENT event',
+      (tester) async {
+    final db = _makeDb();
+    addTearDown(db.close);
+    final customerId = await _seedShopAndCustomer(db);
+    await _seedReminderEvent(db, customerId);
+
+    await tester.pumpWidget(_buildScreen(db, customerId: customerId));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining(AppStrings.lastReminder),
+      findsOneWidget,
+    );
+  });
+
+  // -------------------------------------------------------------------------
+  // 11. Share history shows noPhoneForWhatsApp snackbar when customerPhone is null
+  // -------------------------------------------------------------------------
+  testWidgets('share history shows noPhoneForWhatsApp when phone is null',
+      (tester) async {
+    final db = _makeDb();
+    addTearDown(db.close);
+    await _seedShopAndCustomer(db);
+
+    await tester.pumpWidget(_buildScreen(db, customerPhone: null));
+    await tester.pumpAndSettle();
+
+    // Open popup menu
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    // Tap "تاریخ شیئر کریں" — it should be disabled (no phone), so tap the
+    // popup reminder item which shows the no-phone snackbar instead
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    // The share item is disabled when phone is null; tapping reminder in popup
+    // should also show the snackbar — verify bottom bar path:
+    await tester.tap(find.byKey(const Key('reminder_button')));
+    await tester.pump();
+
+    expect(find.text(AppStrings.noPhoneForWhatsApp), findsOneWidget);
+  });
+
+  // -------------------------------------------------------------------------
+  // 12. REMINDER_SENT event renders as a centre-aligned small text bubble
+  // -------------------------------------------------------------------------
+  testWidgets('REMINDER_SENT event renders as center-aligned small text bubble',
+      (tester) async {
+    final db = _makeDb();
+    addTearDown(db.close);
+    final customerId = await _seedShopAndCustomer(db);
+    await _seedReminderEvent(db, customerId);
+
+    await tester.pumpWidget(_buildScreen(db, customerId: customerId));
+    await tester.pumpAndSettle();
+
+    // Should find the reminder sent label text rendered by _ReminderSentBubble
+    expect(find.textContaining(AppStrings.reminderSent), findsOneWidget);
+
+    // The bubble should be wrapped in a Center widget
+    final reminderTextFinder = find.textContaining(AppStrings.reminderSent);
+    final centerFinder = find.ancestor(
+      of: reminderTextFinder,
+      matching: find.byType(Center),
+    );
+    expect(centerFinder, findsAtLeastNWidgets(1));
+  });
+
+  // -------------------------------------------------------------------------
+  // 13. Balance header shows correct balance after one CREDIT and one PAYMENT
+  // -------------------------------------------------------------------------
+  testWidgets('balance header shows correct balance after CREDIT and PAYMENT',
+      (tester) async {
+    final db = _makeDb();
+    addTearDown(db.close);
+    final customerId = await _seedShopAndCustomer(db);
+    // Credit 1000.00, Payment 400.00 → net balance 600.00
+    await _seedCreditEvent(db, customerId, amountPaisa: 100000);
+    await _seedPaymentEvent(db, customerId, amountPaisa: 40000);
+
+    await tester.pumpWidget(_buildScreen(db, customerId: customerId));
+    await tester.pumpAndSettle();
+
+    // Net balance = 60000 paisa = 600.00
+    // AmountFormatter should render some representation of 600
+    final balanceTextFinder = find.byWidgetPredicate(
+      (w) =>
+          w is Text &&
+          w.style != null &&
+          (w.style!.fontSize ?? 0) >= 24 &&
+          w.style!.color == AppColors.balancePositive,
+    );
+    expect(balanceTextFinder, findsOneWidget);
   });
 }

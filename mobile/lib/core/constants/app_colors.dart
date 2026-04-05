@@ -35,4 +35,7 @@ class AppColors {
   static const Color creditBubbleBg = Color(0xFFECEFF1);
   static const Color creditBubbleBorder = Color(0xFFB0BEC5);
   static const Color reversalBubbleBg = Color(0xFFEEEEEE);
+
+  // Reminder amber (MINOR-4 / STORY-010)
+  static const Color reminderAmber = Color(0xFFFF8F00); // amber[800]
 }
