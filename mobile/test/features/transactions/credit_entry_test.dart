@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../lib/core/constants/app_strings.dart';
 import '../../../lib/core/database/app_database.dart';
 import '../../../lib/core/providers/database_provider.dart';
 import '../../../lib/features/transactions/providers/transactions_provider.dart';
@@ -156,7 +157,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       // Find the ElevatedButton with AppStrings.saveButton text
-      final saveButton = find.widgetWithText(ElevatedButton, 'محفوظ کریں');
+      final saveButton = find.widgetWithText(ElevatedButton, AppStrings.saveButton);
       expect(saveButton, findsOneWidget);
 
       final btn = tester.widget<ElevatedButton>(saveButton);

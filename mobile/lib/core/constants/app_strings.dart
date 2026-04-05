@@ -63,9 +63,14 @@ class AppStrings {
   static const String saveButton = 'محفوظ کریں';
   static const String addNote = 'نوٹ شامل کریں';
   static const String hisaabSaaf = 'حساب صاف!';
+  static const String hisaabSaafSubtitle = 'بقایا صفر ہو گیا!';
   static const String creditSaved = 'ادھار محفوظ';
   static const String whatsappNotify = 'واٹس ایپ';
   static const String currentBalance = 'موجودہ بقایا';
+  static const String shopNotFound = 'دکان نہیں ملی';
+  static const String saveError = 'محفوظ کرنے میں خرابی — دوبارہ کوشش کریں';
+  static const String whatsappCreditTemplate =
+      'السلام علیکم! آپ کا ادھار محفوظ ہو گیا۔ ادھار: {amount}۔ شکریہ — {shopName}';
 
   // Transactions
   static const String udhaar = 'ادھار';

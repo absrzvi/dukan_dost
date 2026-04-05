@@ -11,9 +11,19 @@ import '../repositories/event_repository.dart';
 
 final currentShopIdProvider = FutureProvider<String?>((ref) async {
   final db = ref.watch(appDatabaseProvider);
-  final shop = await db.select(db.shops).getSingleOrNull();
-  return shop?.id;
+  final shops = await db.select(db.shops).get();
+  if (shops.isEmpty) return null;
+  if (shops.length > 1) {
+    // TODO: enforce single-shop constraint at registration time (STORY-005)
+    // ignore: avoid_print
+    print('WARNING: multiple shops found (${shops.length}), using first');
+  }
+  return shops.first.id;
 });
+
+// Temporary device ID provider — STORY-013 will replace with real device_info
+final deviceIdProvider = Provider<String>((ref) => 'device-001');
+final actorLabelProvider = Provider<String>((ref) => 'Main phone');
 
 // ---------------------------------------------------------------------------
 // EventRepository provider

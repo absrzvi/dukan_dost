@@ -22,11 +22,13 @@ class CreditEntryScreen extends ConsumerStatefulWidget {
     required this.customerId,
     required this.customerName,
     this.customerPhone,
+    this.initialAmountPaisa,
   });
 
   final String customerId;
   final String customerName;
   final String? customerPhone;
+  final int? initialAmountPaisa;
 
   @override
   ConsumerState<CreditEntryScreen> createState() => _CreditEntryScreenState();
@@ -52,7 +54,7 @@ class _CreditEntryScreenState extends ConsumerState<CreditEntryScreen> {
       if (shopId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('دکان نہیں ملی')),
+            const SnackBar(content: Text(AppStrings.shopNotFound)),
           );
         }
         setState(() => _saving = false);
@@ -63,6 +65,9 @@ class _CreditEntryScreenState extends ConsumerState<CreditEntryScreen> {
           ? null
           : _noteController.text.trim();
 
+      final deviceId = ref.read(deviceIdProvider);
+      final actorLabel = ref.read(actorLabelProvider);
+
       await ref.read(eventRepositoryProvider).addEvent(
             shopId: shopId,
             eventType: EventType.credit,
@@ -70,8 +75,8 @@ class _CreditEntryScreenState extends ConsumerState<CreditEntryScreen> {
             partyId: widget.customerId,
             amountPaisa: _amountPaisa,
             note: note,
-            deviceId: 'device-001',
-            actorLabel: 'Main phone',
+            deviceId: deviceId,
+            actorLabel: actorLabel,
           );
 
       // Compute new balance
@@ -79,40 +84,57 @@ class _CreditEntryScreenState extends ConsumerState<CreditEntryScreen> {
           .read(eventRepositoryProvider)
           .computeBalance(widget.customerId, PartyType.customer);
 
+      // Invalidate cached balance so the previous screen refreshes on pop
+      ref.invalidate(customerBalanceProvider(widget.customerId));
+
       if (!mounted) return;
 
       final isHisaabSaaf = newBalance == 0;
 
-      // Show SnackBar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor:
-              isHisaabSaaf ? AppColors.hisaabSaafGreen : AppColors.primary,
-          content: Text(
-            isHisaabSaaf ? AppStrings.hisaabSaaf : AppStrings.creditSaved,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+      if (isHisaabSaaf) {
+        // Full-screen celebration overlay
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const _HisaabSaafOverlay(),
+        );
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) {
+            Navigator.of(context).pop(); // pop dialog
+            Navigator.of(context).pop(); // pop screen
+          }
+        });
+      } else {
+        // Show SnackBar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.primary,
+            content: const Text(
+              AppStrings.creditSaved,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+            action: widget.customerPhone != null
+                ? SnackBarAction(
+                    label: AppStrings.whatsappNotify,
+                    textColor: Colors.white,
+                    onPressed: () => _sendWhatsApp(
+                      shopId: shopId,
+                      newBalance: newBalance,
+                    ),
+                  )
+                : null,
           ),
-          action: widget.customerPhone != null
-              ? SnackBarAction(
-                  label: AppStrings.whatsappNotify,
-                  textColor: Colors.white,
-                  onPressed: () => _sendWhatsApp(
-                    shopId: shopId,
-                    newBalance: newBalance,
-                  ),
-                )
-              : null,
-        ),
-      );
+        );
 
-      Navigator.of(context).pop();
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          const SnackBar(content: Text(AppStrings.saveError)),
         );
         setState(() => _saving = false);
       }
@@ -126,17 +148,13 @@ class _CreditEntryScreenState extends ConsumerState<CreditEntryScreen> {
     final phone = widget.customerPhone;
     if (phone == null) return;
 
-    // Build message per AC9
     final db = ref.read(appDatabaseProvider);
     final shop = await db.select(db.shops).getSingleOrNull();
     final shopName = shop?.name ?? '';
-    final amountStr = AmountFormatter.formatPlain(_amountPaisa);
-    final balanceStr = AmountFormatter.formatPlain(newBalance);
 
-    final message =
-        'Assalamualaikum ${widget.customerName} bhai, $shopName mein aaj '
-        'PKR $amountStr ka udhaar hua. '
-        'Aapka total baqi: PKR $balanceStr. Shukriya.';
+    final message = AppStrings.whatsappCreditTemplate
+        .replaceAll('{amount}', AmountFormatter.format(_amountPaisa))
+        .replaceAll('{shopName}', shopName);
 
     await WhatsAppHelper.sendMessage(phone: phone, message: message);
   }
@@ -235,6 +253,8 @@ class _CreditEntryScreenState extends ConsumerState<CreditEntryScreen> {
 
               const SizedBox(height: 16),
 
+              // TODO STORY-010: Add voice note recording button here (optional attachment)
+
               // Save button
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -269,6 +289,41 @@ class _CreditEntryScreenState extends ConsumerState<CreditEntryScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Full-screen celebration overlay shown when the customer's balance hits zero.
+class _HisaabSaafOverlay extends StatelessWidget {
+  const _HisaabSaafOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Dialog.fullscreen(
+      backgroundColor: AppColors.hisaabSaafGreen,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.check_circle, size: 80, color: Colors.white),
+          SizedBox(height: 24),
+          Text(
+            AppStrings.hisaabSaaf,
+            style: TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: 12),
+          Text(
+            AppStrings.hisaabSaafSubtitle,
+            style: TextStyle(
+              fontSize: 20,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
