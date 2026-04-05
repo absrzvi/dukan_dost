@@ -12,10 +12,12 @@ class CustomerListTile extends StatelessWidget {
     super.key,
     required this.item,
     this.onTap,
+    this.onLongPress,
   });
 
   final CustomerWithBalance item;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +53,7 @@ class CustomerListTile extends StatelessWidget {
       ),
       child: ListTile(
         onTap: onTap,
+        onLongPress: onLongPress,
         leading: Stack(
           clipBehavior: Clip.none,
           children: [
