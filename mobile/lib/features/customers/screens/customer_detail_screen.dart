@@ -18,45 +18,32 @@ import '../widgets/event_bubble.dart';
 /// Customer detail screen — chat-thread style transaction history.
 ///
 /// Constructor params:
-///   [customerId]       — UUID of the customer
-///   [customerName]     — display name
-///   [customerPhone]    — optional phone number for WhatsApp
-///   [initialIsFlagged] — flag state as known by the caller (default false)
-class CustomerDetailScreen extends ConsumerStatefulWidget {
+///   [customerId]   — UUID of the customer
+///   [customerName] — display name
+///   [customerPhone] — optional phone number for WhatsApp
+class CustomerDetailScreen extends ConsumerWidget {
   const CustomerDetailScreen({
     super.key,
     required this.customerId,
     required this.customerName,
     this.customerPhone,
-    this.initialIsFlagged = false,
   });
 
   final String customerId;
   final String customerName;
   final String? customerPhone;
-  final bool initialIsFlagged;
 
   @override
-  ConsumerState<CustomerDetailScreen> createState() =>
-      _CustomerDetailScreenState();
-}
-
-class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
-  late bool _isFlagged;
-
-  @override
-  void initState() {
-    super.initState();
-    _isFlagged = widget.initialIsFlagged;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isFlagged = _isFlagged;
+  Widget build(BuildContext context, WidgetRef ref) {
+    // MAJOR-3: reactive isFlagged from DB — no local state
+    final isFlagged = ref
+            .watch(customerFlaggedProvider(customerId))
+            .valueOrNull ??
+        false;
 
     final eventsAsync =
-        ref.watch(customerEventsStreamProvider(widget.customerId));
-    final balance = eventsAsync.whenOrNull(
+        ref.watch(customerEventsStreamProvider(customerId));
+    final balancePaisa = eventsAsync.whenOrNull(
           data: (events) {
             int b = 0;
             for (final e in events) {
@@ -84,6 +71,26 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       },
     );
 
+    // Derive daysOverdue for popup reminder (MAJOR-2)
+    final daysOverdue = eventsAsync.whenOrNull(
+          data: (events) {
+            int? lastCreditTs;
+            for (int i = events.length - 1; i >= 0; i--) {
+              if (events[i].eventType == EventType.credit) {
+                lastCreditTs = events[i].deviceTimestamp;
+                break;
+              }
+            }
+            if (balancePaisa > 0 && lastCreditTs != null) {
+              final lastCredit =
+                  DateTime.fromMillisecondsSinceEpoch(lastCreditTs);
+              return DateTime.now().difference(lastCredit).inDays;
+            }
+            return 0;
+          },
+        ) ??
+        0;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -91,14 +98,15 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          title: Text(widget.customerName),
+          title: Text(customerName),
           actions: [
             _DetailPopupMenu(
-              customerId: widget.customerId,
-              customerName: widget.customerName,
-              customerPhone: widget.customerPhone,
+              customerId: customerId,
+              customerName: customerName,
+              customerPhone: customerPhone,
               isFlagged: isFlagged,
-              onFlagToggled: (v) => setState(() => _isFlagged = v),
+              balancePaisa: balancePaisa,
+              daysOverdue: daysOverdue,
             ),
           ],
         ),
@@ -106,7 +114,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           children: [
             // Sticky balance header
             _BalanceHeader(
-              balancePaisa: balance,
+              balancePaisa: balancePaisa,
               lastReminderTs: lastReminderTs,
             ),
 
@@ -140,9 +148,9 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
 
             // Bottom action bar
             _BottomActionBar(
-              customerId: widget.customerId,
-              customerName: widget.customerName,
-              customerPhone: widget.customerPhone,
+              customerId: customerId,
+              customerName: customerName,
+              customerPhone: customerPhone,
             ),
           ],
         ),
@@ -197,7 +205,6 @@ class _BalanceHeader extends StatelessWidget {
               color: color,
             ),
           ),
-          // MAJOR-1: last reminder date row
           if (lastReminderTs != null) ...[
             const SizedBox(height: 4),
             Text(
@@ -298,7 +305,7 @@ class _BottomActionBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // یاد دہانی (Reminder) — outlined amber/grey  MAJOR-2
+          // یاد دہانی (Reminder) — outlined amber  MAJOR-1: guard on null phone
           Expanded(
             child: OutlinedButton.icon(
               key: const Key('reminder_button'),
@@ -308,7 +315,7 @@ class _BottomActionBar extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               onPressed: () {
-                // TODO STORY-011: Replace with WhatsApp reminder flow
+                // MAJOR-1: guard on null phone
                 if (customerPhone == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -317,6 +324,7 @@ class _BottomActionBar extends StatelessWidget {
                   );
                   return;
                 }
+                // TODO STORY-011: Replace with WhatsApp reminder flow
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(AppStrings.reminderComingSoon),
@@ -324,8 +332,8 @@ class _BottomActionBar extends StatelessWidget {
                 );
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.amber[800],
-                side: BorderSide(color: Colors.amber[700]!),
+                foregroundColor: AppColors.reminderAmber,
+                side: const BorderSide(color: AppColors.reminderAmber),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -349,16 +357,24 @@ class _DetailPopupMenu extends ConsumerWidget {
     required this.customerName,
     this.customerPhone,
     required this.isFlagged,
-    required this.onFlagToggled,
+    required this.balancePaisa,
+    required this.daysOverdue,
   });
 
   final String customerId;
   final String customerName;
   final String? customerPhone;
   final bool isFlagged;
-  final ValueChanged<bool> onFlagToggled;
+  // MAJOR-2: live balance/daysOverdue passed from parent
+  final int balancePaisa;
+  final int daysOverdue;
 
-  Future<void> _shareHistory(BuildContext context, WidgetRef ref) async {
+  /// IMPORTANT-1: accepts pre-computed balancePaisa to avoid duplication.
+  Future<void> _shareHistory(
+    BuildContext context,
+    WidgetRef ref,
+    int balancePaisa,
+  ) async {
     final phone = customerPhone;
     if (phone == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -367,7 +383,7 @@ class _DetailPopupMenu extends ConsumerWidget {
       return;
     }
 
-    // IMPORTANT-3: read events fresh at tap time
+    // Read events fresh at tap time
     final eventsAsync =
         ref.read(customerEventsStreamProvider(customerId));
     final List<Event> events = eventsAsync.valueOrNull ?? [];
@@ -380,24 +396,11 @@ class _DetailPopupMenu extends ConsumerWidget {
 
     if (!context.mounted) return;
 
-    final int balance;
-    {
-      int b = 0;
-      for (final e in events) {
-        if (e.eventType == EventType.credit) {
-          b += e.amountPaisa;
-        } else if (e.eventType == EventType.payment ||
-            e.eventType == EventType.reversal) {
-          b -= e.amountPaisa;
-        }
-      }
-      balance = b;
-    }
-
     final buffer = StringBuffer();
-    buffer.writeln('${AppStrings.customers}: $customerName');
+    // IMPORTANT-2: use AppStrings.customerName instead of AppStrings.customers
+    buffer.writeln('${AppStrings.customerName}: $customerName');
     buffer.writeln(
-        '${AppStrings.currentBalance}: ${AmountFormatter.format(balance)}');
+        '${AppStrings.currentBalance}: ${AmountFormatter.format(balancePaisa)}');
     buffer.writeln('---');
 
     for (final e in events) {
@@ -412,7 +415,8 @@ class _DetailPopupMenu extends ConsumerWidget {
     }
 
     if (shopName.isNotEmpty) {
-      buffer.writeln('شکریہ — $shopName');
+      // MINOR-6: use AppStrings.thankYouShop constant
+      buffer.writeln('${AppStrings.thankYouShop} $shopName');
     }
 
     await WhatsAppHelper.sendMessage(
@@ -443,29 +447,51 @@ class _DetailPopupMenu extends ConsumerWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      final repo = ref.read(customersRepositoryProvider);
-      await repo.deleteCustomer(customerId);
-      if (context.mounted) Navigator.of(context).pop();
+      // IMPORTANT-3: wrap in try/catch
+      try {
+        final repo = ref.read(customersRepositoryProvider);
+        await repo.deleteCustomer(customerId);
+        // IMPORTANT-4: popUntil instead of single pop
+        if (context.mounted) {
+          Navigator.of(context).popUntil(
+            (route) => route.isFirst || route.settings.name == '/customers',
+          );
+        }
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text(AppStrings.saveError)),
+          );
+        }
+      }
     }
   }
 
   Future<void> _toggleFlag(BuildContext context, WidgetRef ref) async {
-    final repo = ref.read(customersRepositoryProvider);
-    final customer = await repo.getCustomer(customerId);
-    if (customer == null) return;
-    final newFlag = customer.isFlagged == 1 ? 0 : 1;
-    await repo.updateCustomer(customerId: customerId, isFlagged: newFlag);
-    onFlagToggled(newFlag == 1);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            newFlag == 1
-                ? AppStrings.flagConfirmed
-                : AppStrings.unflagConfirmed,
+    // IMPORTANT-3: wrap in try/catch
+    try {
+      final repo = ref.read(customersRepositoryProvider);
+      final customer = await repo.getCustomer(customerId);
+      if (customer == null) return;
+      final newFlag = customer.isFlagged == 1 ? 0 : 1;
+      await repo.updateCustomer(customerId: customerId, isFlagged: newFlag);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newFlag == 1
+                  ? AppStrings.flagConfirmed
+                  : AppStrings.unflagConfirmed,
+            ),
           ),
-        ),
-      );
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(AppStrings.saveError)),
+        );
+      }
     }
   }
 
@@ -479,7 +505,7 @@ class _DetailPopupMenu extends ConsumerWidget {
           case 'flag':
             await _toggleFlag(context, ref);
           case 'reminder':
-            // TODO STORY-011: Replace with WhatsApp reminder flow
+            // MAJOR-1: guard on null phone
             if (!hasPhone) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -487,6 +513,7 @@ class _DetailPopupMenu extends ConsumerWidget {
                 ),
               );
             } else {
+              // TODO STORY-011: Replace with WhatsApp reminder flow
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(AppStrings.reminderComingSoon),
@@ -494,24 +521,24 @@ class _DetailPopupMenu extends ConsumerWidget {
               );
             }
           case 'share':
-            await _shareHistory(context, ref);
+            // IMPORTANT-1: pass pre-computed balancePaisa
+            await _shareHistory(context, ref, balancePaisa);
           case 'delete':
             await _confirmDelete(context, ref);
         }
       },
       itemBuilder: (_) => [
+        // MAJOR-3: isFlagged comes from reactive provider, passed as param
         PopupMenuItem(
           value: 'flag',
           child: Text(isFlagged
               ? AppStrings.unflagCustomer
               : AppStrings.flagCustomer),
         ),
-        // MAJOR-2: reminder menu item
         const PopupMenuItem(
           value: 'reminder',
           child: Text(AppStrings.reminderButton),
         ),
-        // MAJOR-4: grey out share when no phone
         PopupMenuItem(
           value: 'share',
           enabled: hasPhone,

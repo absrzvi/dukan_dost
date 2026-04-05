@@ -188,4 +188,5 @@ class AppStrings {
   static const String noPhoneForWhatsApp = 'واٹس ایپ کے لیے فون نمبر ضروری ہے';
   static const String flagConfirmed = 'نشان لگا دیا گیا';
   static const String unflagConfirmed = 'نشان ہٹا دیا گیا';
+  static const String thankYouShop = 'شکریہ —';
 }

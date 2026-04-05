@@ -101,6 +101,16 @@ final customerFlagProvider =
   return customer?.isFlagged == 1;
 });
 
+/// Reactive stream of isFlagged for a single customer from the DB.
+/// Prevents local state from desyncing with the database (MAJOR-3).
+final customerFlaggedProvider =
+    StreamProvider.autoDispose.family<bool, String>((ref, customerId) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.customersDao
+      .watchCustomer(customerId)
+      .map((c) => c?.isFlagged == 1);
+});
+
 /// Sum of all positive balances (customers who owe the shop) in paisa.
 final totalOwedProvider =
     Provider.autoDispose.family<int, String>((ref, shopId) {

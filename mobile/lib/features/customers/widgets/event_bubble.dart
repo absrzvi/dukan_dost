@@ -12,11 +12,14 @@ import '../../../core/utils/date_formatter.dart';
 // ---------------------------------------------------------------------------
 
 class _VoiceNotePlayButton extends StatelessWidget {
-  const _VoiceNotePlayButton();
+  const _VoiceNotePlayButton({required this.voiceNotePath});
+
+  // MINOR-2: required path for future audio playback
+  final String voiceNotePath;
 
   @override
   Widget build(BuildContext context) {
-    // TODO STORY-010: Implement actual audio playback
+    // TODO STORY-010: Implement actual audio playback using voiceNotePath
     return IconButton(
       icon: const Icon(Icons.play_circle_outline, size: 24),
       padding: EdgeInsets.zero,
@@ -129,9 +132,11 @@ class _CreditBubble extends StatelessWidget {
               ),
             // Voice note playback
             if (event.voiceNotePath != null)
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: _VoiceNotePlayButton(),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: _VoiceNotePlayButton(
+                  voiceNotePath: event.voiceNotePath!,
+                ),
               ),
             // Timestamp
             const SizedBox(height: 4),
@@ -211,9 +216,11 @@ class _PaymentBubble extends StatelessWidget {
               ),
             // Voice note playback
             if (event.voiceNotePath != null)
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: _VoiceNotePlayButton(),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: _VoiceNotePlayButton(
+                  voiceNotePath: event.voiceNotePath!,
+                ),
               ),
             const SizedBox(height: 4),
             Text(
