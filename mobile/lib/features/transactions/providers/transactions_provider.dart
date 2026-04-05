@@ -57,6 +57,18 @@ final customerEventsProvider =
 });
 
 // ---------------------------------------------------------------------------
+// Customer events stream provider — autoDispose family (STORY-010)
+// Watches events for a customer in ASC order (oldest first) for chat thread.
+// ---------------------------------------------------------------------------
+
+final customerEventsStreamProvider =
+    StreamProvider.autoDispose.family<List<Event>, String>(
+        (ref, customerId) {
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.watchEvents(customerId, PartyType.customer);
+});
+
+// ---------------------------------------------------------------------------
 // Supplier balance provider
 // ---------------------------------------------------------------------------
 
