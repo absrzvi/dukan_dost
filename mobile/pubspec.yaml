@@ -58,6 +58,10 @@ dependencies:
   googleapis: ^13.2.0
   # SMS / Phone
   phone_state: ^2.0.0
+  # Contact import
+  flutter_contacts: ^1.1.9+1
+  # Permission handling
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

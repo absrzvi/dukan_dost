@@ -23,6 +23,23 @@ class AppStrings {
   static const String importContactsRoman = 'Contacts import karein';
   static const String skip = 'چھوڑیں';
   static const String skipRoman = 'Chhorein';
+  static const String skipImport = 'چھوڑیں';
+  static const String skipImportRoman = 'Chhorein';
+  static const String next = 'اگلا';
+  static const String nextRoman = 'Agla';
+  static const String done = 'مکمل';
+  static const String doneRoman = 'Mukammal';
+  static const String searchContacts = 'رابطے تلاش کریں';
+  static const String searchContactsRoman = 'Contacts talaash karein';
+  static const String continueText = 'جاری رکھیں';
+  static const String continueTextRoman = 'Jaari rakhein';
+  // Onboarding walkthrough
+  static const String walkthroughStep1Title = 'اپنا گاہک چنیں';
+  static const String walkthroughStep1Subtitle = 'فہرست سے گاہک منتخب کریں یا نیا شامل کریں';
+  static const String walkthroughStep2Title = 'ادھار لکھیں';
+  static const String walkthroughStep2Subtitle = 'گاہک کا ادھار آسانی سے درج کریں';
+  static const String walkthroughStep3Title = 'ادائیگی لکھیں';
+  static const String walkthroughStep3Subtitle = 'ادائیگی ملنے پر فوری درج کریں';
 
   // Home
   static const String totalOwedToMe = 'مجھے ملنا ہے';
