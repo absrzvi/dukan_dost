@@ -146,12 +146,21 @@ class AppStrings {
       'السلام علیکم {name} بھائی، {shopName} کا PKR {amount} بہت دن سے باقی ہے۔ آج ہی ادا کر دیں تو مہربانی ہوگی۔ شکریہ۔';
 
   // Suppliers
-  static const String suppliers = 'سپلائر';
-  static const String suppliersRoman = 'Supplier';
+  static const String suppliers = 'سپلائرز';
+  static const String suppliersRoman = 'Suppliers';
   static const String dueDate = 'آخری تاریخ';
   static const String dueDateRoman = 'Aakhri taareekh';
   static const String markPaid = 'ادا ہو گیا';
   static const String markPaidRoman = 'Ada ho gaya';
+  static const String totalOwedToSuppliers = 'سپلائروں کو واجب الادا';
+  static const String noSuppliers = 'کوئی سپلائر نہیں';
+  static const String addSupplier = 'سپلائر شامل کریں';
+  static const String supplierName = 'سپلائر کا نام';
+  static const String initialDebt = 'ابتدائی ادھار';
+  static const String overdue = 'میعاد گزر گئی';
+  static const String supplierComingSoon = 'سپلائر کی تفصیل جلد آئے گا';
+  static const String supplierNameRequired = 'سپلائر کا نام ضروری ہے';
+  static const String deleteSupplier = 'سپلائر حذف کریں';
 
   // Sync / Offline
   static const String offline = 'آف لائن';
