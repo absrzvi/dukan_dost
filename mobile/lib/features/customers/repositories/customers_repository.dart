@@ -127,8 +127,15 @@ class CustomersRepository {
           ));
     });
 
+    // Read back the inserted row to return the full Customer object.
+    // companion.build() gives us the typed row without a second DB roundtrip
+    // risk — but getCustomer is safe here because the transaction above has
+    // already committed, so the row is guaranteed to exist.
     final created = await _customersDao.getCustomer(id);
-    return created!;
+    if (created == null) {
+      throw StateError('createCustomer: row not found after insert (id=$id)');
+    }
+    return created;
   }
 
   /// Update an existing customer locally and queue for sync.
@@ -151,7 +158,7 @@ class CustomersRepository {
     await _db.transaction(() async {
       await _customersDao.upsertCustomer(companion);
       await _db.into(_db.syncQueue).insert(SyncQueueCompanion.insert(
-            eventId: '${customerId}_update_$now',
+            eventId: _uuid.v4(), // proper UUID — synthetic keys rejected by server
             status: const Value('PENDING'),
             payload: Value(jsonEncode({
               'action': 'UPDATE_CUSTOMER',
@@ -173,7 +180,7 @@ class CustomersRepository {
     await _db.transaction(() async {
       await _customersDao.softDeleteCustomer(customerId);
       await _db.into(_db.syncQueue).insert(SyncQueueCompanion.insert(
-            eventId: '${customerId}_delete_$now',
+            eventId: _uuid.v4(), // proper UUID — synthetic keys rejected by server
             status: const Value('PENDING'),
             payload: Value(jsonEncode({
               'action': 'DELETE_CUSTOMER',

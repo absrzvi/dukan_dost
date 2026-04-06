@@ -58,6 +58,13 @@ class AppStrings {
   static const String netPosition = 'خالص';
   static const String netPositionRoman = 'Kul position';
 
+  // Auth errors
+  static const String errorTooManyOtpRequests = 'بہت زیادہ کوشش۔ کچھ دیر بعد دوبارہ کریں۔';
+  static const String errorNoInternet = 'انٹرنیٹ کنیکشن نہیں ہے';
+  static const String errorOtpSendFailed = 'OTP بھیجنے میں مسئلہ ہوا';
+  static const String errorInvalidOtp = 'غلط یا میعاد ختم کوڈ';
+  static const String errorVerifyFailed = 'تصدیق میں مسئلہ ہوا';
+
   // Credit Entry
   static const String creditEntry = 'ادھار لکھیں';
   static const String saveButton = 'محفوظ کریں';

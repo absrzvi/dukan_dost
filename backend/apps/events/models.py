@@ -69,15 +69,18 @@ class Event(models.Model):
     def save(self, *args, **kwargs) -> None:  # type: ignore[override]
         """
         APPEND-ONLY enforcement at the model layer.
-        Raises ValueError if attempting to update an existing Event record.
-        For new records (pk may be client-supplied), catches IntegrityError from
-        the actual DB write to handle duplicate UUIDs atomically — this avoids
-        the TOCTOU race condition of a check-then-save pattern.
+        Every save is forced to be an INSERT. Duplicate UUIDs are caught by the
+        database UNIQUE constraint (IntegrityError), not by a pre-check SELECT.
         """
         # Detect update attempt: only raise if the record is already persisted.
         # We use force_insert semantics — if kwargs indicate an update, block it.
-        if kwargs.get("force_update") or (not kwargs.get("force_insert") and self.pk is not None and Event.objects.filter(pk=self.pk).exists()):
+        # Block explicit update attempts unconditionally.
+        if kwargs.get("force_update"):
             raise ValueError("Event records are immutable. Use a REVERSAL event to correct mistakes.")
+        # Force every save to be an INSERT, never an UPDATE, even when a PK is
+        # present (client-supplied UUID). This eliminates the TOCTOU SELECT+INSERT
+        # race — the database's UNIQUE constraint on pk catches duplicates atomically.
+        kwargs["force_insert"] = True
         try:
             super().save(*args, **kwargs)
         except IntegrityError:

@@ -128,7 +128,7 @@ def test_event_save_existing_raises() -> None:
         device_id="device-test",
         device_timestamp=datetime(2026, 4, 5, 11, 0, 0, tzinfo=timezone.utc),
     )
-    with pytest.raises(ValueError, match="immutable"):
+    with pytest.raises(ValueError, match="already exists"):
         duplicate.save()
 
 
