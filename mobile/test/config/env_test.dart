@@ -1,5 +1,8 @@
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dukan_dost/config/env.dart';
+import 'package:dukan_dost/core/network/api_client.dart';
 
 void main() {
   group('env.dart — apiBaseUrl', () {
@@ -9,12 +12,22 @@ void main() {
       expect(apiBaseUrl, equals('http://10.0.2.2:8000'));
     });
 
-    test('apiBaseUrl is a non-empty string', () {
-      expect(apiBaseUrl, isNotEmpty);
+    test('dioProvider baseUrl equals apiBaseUrl', () {
+      // Verifies that dioProvider wires apiBaseUrl as the Dio base URL —
+      // not a hardcoded string or stale inline constant.
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final dio = container.read(dioProvider);
+      expect(dio.options.baseUrl, equals(apiBaseUrl));
     });
+  });
 
-    test('apiBaseUrl starts with http', () {
-      expect(apiBaseUrl, startsWith('http'));
+  group('api_client.dart — no hardcoded URLs', () {
+    test('dioProvider produces a Dio instance', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final dio = container.read(dioProvider);
+      expect(dio, isA<Dio>());
     });
   });
 }
