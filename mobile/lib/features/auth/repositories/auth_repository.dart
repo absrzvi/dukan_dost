@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/constants/app_strings.dart';
+
 class AuthRepository {
   final Dio _dio;
 
@@ -14,13 +16,13 @@ class AuthRepository {
       return response.statusCode == 200;
     } on DioException catch (e) {
       if (e.response?.statusCode == 429) {
-        throw const AuthException('بہت زیادہ کوشش۔ کچھ دیر بعد دوبارہ کریں۔');
+        throw const AuthException(AppStrings.errorTooManyOtpRequests);
       }
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.unknown) {
-        throw const AuthException('انٹرنیٹ کنیکشن نہیں ہے');
+        throw const AuthException(AppStrings.errorNoInternet);
       }
-      throw const AuthException('OTP بھیجنے میں مسئلہ ہوا');
+      throw const AuthException(AppStrings.errorOtpSendFailed);
     }
   }
 
@@ -39,9 +41,9 @@ class AuthRepository {
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        throw const AuthException('غلط یا میعاد ختم کوڈ');
+        throw const AuthException(AppStrings.errorInvalidOtp);
       }
-      throw const AuthException('تصدیق میں مسئلہ ہوا');
+      throw const AuthException(AppStrings.errorVerifyFailed);
     }
   }
 }

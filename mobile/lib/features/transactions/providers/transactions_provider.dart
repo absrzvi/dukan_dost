@@ -71,7 +71,7 @@ final eventRepositoryProvider = Provider<EventRepository>((ref) {
 // ---------------------------------------------------------------------------
 
 final customerBalanceProvider =
-    FutureProvider.family<int, String>((ref, customerId) async {
+    FutureProvider.autoDispose.family<int, String>((ref, customerId) async {
   final repo = ref.watch(eventRepositoryProvider);
   return repo.computeBalance(customerId, PartyType.customer);
 });
@@ -82,8 +82,10 @@ final customerBalanceProvider =
 // TODO: migrate to autoDispose (MINOR-2 / STORY-010)
 // ---------------------------------------------------------------------------
 
+// Kept for backwards compatibility — prefer customerEventsStreamProvider.
+// TODO: remove after all consumers migrated to customerEventsStreamProvider.
 final customerEventsProvider =
-    StreamProvider.family<List<Event>, String>((ref, customerId) {
+    StreamProvider.autoDispose.family<List<Event>, String>((ref, customerId) {
   final repo = ref.watch(eventRepositoryProvider);
   return repo.watchEvents(customerId, PartyType.customer);
 });
@@ -105,7 +107,7 @@ final customerEventsStreamProvider =
 // ---------------------------------------------------------------------------
 
 final supplierBalanceProvider =
-    FutureProvider.family<int, String>((ref, supplierId) async {
+    FutureProvider.autoDispose.family<int, String>((ref, supplierId) async {
   final repo = ref.watch(eventRepositoryProvider);
   return repo.computeBalance(supplierId, PartyType.supplier);
 });
@@ -115,7 +117,7 @@ final supplierBalanceProvider =
 // ---------------------------------------------------------------------------
 
 final supplierEventsProvider =
-    StreamProvider.family<List<Event>, String>((ref, supplierId) {
+    StreamProvider.autoDispose.family<List<Event>, String>((ref, supplierId) {
   final repo = ref.watch(eventRepositoryProvider);
   return repo.watchEvents(supplierId, PartyType.supplier);
 });

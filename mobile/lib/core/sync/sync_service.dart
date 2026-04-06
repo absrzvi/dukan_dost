@@ -88,10 +88,11 @@ class SyncService {
           .toList();
 
       if (payloads.isEmpty) {
-        // Payloads are null for some reason — mark synced to unblock queue.
-        await dao.markSynced(eventIds);
-        totalPushed += eventIds.length;
-        continue;
+        // All entries in this batch have null payloads — data corruption.
+        // Mark FAILED so they are visible for investigation rather than silently
+        // disappearing as SYNCED without ever reaching the server.
+        await dao.markFailed(eventIds);
+        break;
       }
 
       try {

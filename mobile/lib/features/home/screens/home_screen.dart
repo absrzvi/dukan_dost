@@ -36,7 +36,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       data: (shopId) {
         if (shopId == null) {
           return const Scaffold(
-            body: Center(child: Text('دکان نہیں ملی')),
+            body: Center(child: Text(AppStrings.shopNotFound)),
           );
         }
 

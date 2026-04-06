@@ -158,7 +158,10 @@ class SuppliersRepository {
     });
 
     final created = await _suppliersDao.getSupplier(id);
-    return created!;
+    if (created == null) {
+      throw StateError('createSupplier: row not found after insert (id=$id)');
+    }
+    return created;
   }
 
   /// Mark a supplier as paid and queue for sync.
@@ -172,7 +175,7 @@ class SuppliersRepository {
     await _db.transaction(() async {
       await _suppliersDao.markPaidSupplier(supplierId);
       await _db.into(_db.syncQueue).insert(SyncQueueCompanion.insert(
-            eventId: '${supplierId}_paid_$now',
+            eventId: _uuid.v4(), // proper UUID — synthetic keys rejected by server
             status: const Value('PENDING'),
             payload: Value(jsonEncode({
               'action': 'MARK_SUPPLIER_PAID',
@@ -192,7 +195,7 @@ class SuppliersRepository {
     await _db.transaction(() async {
       await _suppliersDao.softDeleteSupplier(supplierId);
       await _db.into(_db.syncQueue).insert(SyncQueueCompanion.insert(
-            eventId: '${supplierId}_delete_$now',
+            eventId: _uuid.v4(), // proper UUID — synthetic keys rejected by server
             status: const Value('PENDING'),
             payload: Value(jsonEncode({
               'action': 'DELETE_SUPPLIER',
