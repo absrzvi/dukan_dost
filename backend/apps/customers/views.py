@@ -8,6 +8,9 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.authentication.authentication import ShopTokenAuthentication
+from apps.events.views import IsAuthenticatedShop
+
 
 class CustomerListView(APIView):
     """
@@ -15,6 +18,9 @@ class CustomerListView(APIView):
     POST /api/customers    — create a new customer
     Auth: OTP session token required.
     """
+
+    authentication_classes = [ShopTokenAuthentication]
+    permission_classes = [IsAuthenticatedShop]
 
     def get(self, request: Request) -> Response:
         return Response(
@@ -35,6 +41,9 @@ class CustomerDetailView(APIView):
     Auth: OTP session token required.
     """
 
+    authentication_classes = [ShopTokenAuthentication]
+    permission_classes = [IsAuthenticatedShop]
+
     def put(self, request: Request, pk: str) -> Response:
         return Response(
             {"detail": "Not implemented yet."},
@@ -47,6 +56,9 @@ class CustomerEventListView(APIView):
     GET /api/customers/{id}/events — full event history for one customer
     Auth: OTP session token required.
     """
+
+    authentication_classes = [ShopTokenAuthentication]
+    permission_classes = [IsAuthenticatedShop]
 
     def get(self, request: Request, pk: str) -> Response:
         return Response(

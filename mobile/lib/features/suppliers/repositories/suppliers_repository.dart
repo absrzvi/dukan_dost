@@ -74,9 +74,11 @@ class SuppliersRepository {
 
   /// Create a new supplier locally and queue for sync.
   /// If [initialDebtPaisa] > 0, also writes a CREDIT event atomically.
+  /// [deviceId] must be passed from the real device ID provider — never hardcode.
   Future<Supplier> createSupplier({
     required String shopId,
     required String name,
+    required String deviceId,
     String? phone,
     DateTime? dueDate,
     int? initialDebtPaisa,
@@ -127,7 +129,7 @@ class SuppliersRepository {
           'party_type': PartyType.supplier,
           'party_id': id,
           'amount_paisa': initialDebtPaisa,
-          'device_id': 'unknown-device',
+          'device_id': deviceId,
           'device_timestamp':
               DateTime.fromMillisecondsSinceEpoch(now, isUtc: true)
                   .toIso8601String(),
@@ -140,7 +142,7 @@ class SuppliersRepository {
               partyType: PartyType.supplier,
               partyId: id,
               amountPaisa: initialDebtPaisa,
-              deviceId: 'unknown-device',
+              deviceId: deviceId,
               deviceTimestamp: now,
               serverTimestamp: const Value(null),
               createdAt: now,

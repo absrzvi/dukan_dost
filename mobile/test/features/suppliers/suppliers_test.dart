@@ -37,6 +37,7 @@ Future<String> _seedSupplier(
   final s = await repo.createSupplier(
     shopId: shopId,
     name: name,
+    deviceId: 'test-device-001',
     phone: phone,
     dueDate: dueDate,
     initialDebtPaisa: initialDebtPaisa,

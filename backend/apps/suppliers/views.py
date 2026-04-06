@@ -8,6 +8,9 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.authentication.authentication import ShopTokenAuthentication
+from apps.events.views import IsAuthenticatedShop
+
 
 class SupplierListView(APIView):
     """
@@ -15,6 +18,9 @@ class SupplierListView(APIView):
     POST /api/suppliers — create a new supplier
     Auth: OTP session token required.
     """
+
+    authentication_classes = [ShopTokenAuthentication]
+    permission_classes = [IsAuthenticatedShop]
 
     def get(self, request: Request) -> Response:
         return Response(
@@ -35,6 +41,9 @@ class SupplierDetailView(APIView):
     DELETE /api/suppliers/{id} — soft-delete supplier
     Auth: OTP session token required.
     """
+
+    authentication_classes = [ShopTokenAuthentication]
+    permission_classes = [IsAuthenticatedShop]
 
     def put(self, request: Request, pk: str) -> Response:
         return Response(

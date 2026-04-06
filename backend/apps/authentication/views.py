@@ -35,12 +35,20 @@ def send_sms(phone: str, otp_code: str) -> bool:
 
 
 def check_rate_limit(phone: str) -> bool:
-    """Max 5 OTP requests per phone per hour."""
+    """Max 5 OTP requests per phone per hour.
+
+    Must be called inside a transaction.atomic() block so that the SELECT COUNT
+    and the subsequent INSERT are serialised — preventing a TOCTOU race where two
+    concurrent requests both pass the count check before either inserts.
+    The select_for_update() locks the matching rows for the duration of the
+    transaction, so a second concurrent call blocks until the first commits.
+    """
     one_hour_ago = timezone.now() - timezone.timedelta(hours=1)
-    recent_count = OTPRequest.objects.filter(
-        phone=phone,
-        created_at__gte=one_hour_ago,
-    ).count()
+    recent_count = (
+        OTPRequest.objects.select_for_update()
+        .filter(phone=phone, created_at__gte=one_hour_ago)
+        .count()
+    )
     return recent_count < 5
 
 

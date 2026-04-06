@@ -1,3 +1,5 @@
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/event_constants.dart';
@@ -21,9 +23,37 @@ final currentShopIdProvider = FutureProvider<String?>((ref) async {
   return shops.first.id;
 });
 
-// Temporary device ID provider — STORY-013 will replace with real device_info
-final deviceIdProvider = Provider<String>((ref) => 'device-001');
-final actorLabelProvider = Provider<String>((ref) => 'Main phone');
+// ---------------------------------------------------------------------------
+// Device ID provider — reads real Android device ID via device_info_plus.
+// Falls back to a UUID stored in SharedPreferences on first run (not implemented
+// here) — for now returns the Android ID which is stable per device per app.
+// ---------------------------------------------------------------------------
+
+final deviceInfoProvider = FutureProvider<AndroidDeviceInfo?>((ref) async {
+  if (!defaultTargetPlatform.toString().contains('android')) return null;
+  final plugin = DeviceInfoPlugin();
+  return plugin.androidInfo;
+});
+
+final deviceIdProvider = Provider<String>((ref) {
+  final info = ref.watch(deviceInfoProvider);
+  return info.when(
+    data: (android) => android?.id ?? 'unknown-${DateTime.now().millisecondsSinceEpoch}',
+    loading: () => 'loading',
+    error: (_, __) => 'error-device',
+  );
+});
+
+final actorLabelProvider = Provider<String>((ref) {
+  final info = ref.watch(deviceInfoProvider);
+  return info.when(
+    data: (android) => android != null
+        ? '${android.brand} ${android.model}'
+        : 'Unknown device',
+    loading: () => 'Unknown device',
+    error: (_, __) => 'Unknown device',
+  );
+});
 
 // ---------------------------------------------------------------------------
 // EventRepository provider
