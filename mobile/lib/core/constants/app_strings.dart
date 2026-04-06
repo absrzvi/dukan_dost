@@ -209,4 +209,19 @@ class AppStrings {
   static const String noPhoneSmsComingSoon = 'فون نمبر نہیں — SMS جلد آئے گا';
   static const String sendViaWhatsapp = 'واٹس ایپ بھیجیں';
 
+  // STORY-015: Backup
+  static const String backup = 'بیک اپ';
+  static const String backupNow = 'ابھی بیک اپ لیں';
+  static const String restoreBackup = 'بیک اپ بحال کریں';
+  static const String neverBackedUp = 'کبھی نہیں';
+  static const String backupSuccess = 'بیک اپ محفوظ ہو گیا';
+  static const String backupFailed = 'بیک اپ میں خرابی';
+  static const String lastBackup = 'آخری بیک اپ';
+  static const String googleDriveComingSoon = 'گوگل ڈرائیو جلد آئے گا';
+  static const String restoreWarning = 'بحالی کے بعد ایپ دوبارہ شروع کریں';
+  static const String backupRestoreComingSoon = 'ریسٹور فیچر جلد آ رہا ہے';
+
+  // STORY-016: FCM
+  static const String fcmComingSoon = 'نوٹیفکیشن جلد آئے گا';
+
 }
