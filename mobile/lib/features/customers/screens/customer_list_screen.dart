@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/amount_formatter.dart';
+import '../../../shared/widgets/offline_indicator.dart';
 import '../../transactions/screens/credit_entry_screen.dart';
 import '../../transactions/screens/payment_entry_screen.dart';
 import '../models/customer_with_balance.dart';
@@ -100,6 +101,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                 )
               : const Text(AppStrings.customers),
           actions: [
+            const OfflineIndicator(),
             IconButton(
               icon: Icon(_searchOpen ? Icons.close : Icons.search),
               onPressed: _toggleSearch,

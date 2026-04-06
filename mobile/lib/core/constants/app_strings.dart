@@ -165,10 +165,12 @@ class AppStrings {
   // Sync / Offline
   static const String offline = 'آف لائن';
   static const String offlineRoman = 'Offline';
-  static const String syncing = 'ہم آہنگی';
+  static const String syncing = 'مطابقت ہو رہی ہے...';
   static const String syncingRoman = 'Sync ho raha hai';
   static const String syncComplete = 'ہم آہنگ';
   static const String syncCompleteRoman = 'Sync complete';
+  static const String synced = 'مطابقت مکمل';
+  static const String syncError = 'مطابقت میں خرابی';
 
   // History / Dispute
   static const String historyShare = 'تاریخ شیئر کریں';
