@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/sync/sync_provider.dart';
 import '../../customers/screens/customer_list_screen.dart';
 import '../../suppliers/screens/suppliers_screen.dart';
 import '../../transactions/providers/transactions_provider.dart';
@@ -19,6 +20,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Activate auto-sync (triggers on offline→online transitions).
+    ref.watch(autoSyncProvider);
+
     final shopIdAsync = ref.watch(currentShopIdProvider);
 
     return shopIdAsync.when(

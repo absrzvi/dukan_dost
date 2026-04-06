@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 
 import '../app_database.dart';
 import '../tables/events_table.dart';
+import '../tables/shops_table.dart';
 import '../tables/sync_queue_table.dart';
 
 part 'events_dao.g.dart';
@@ -28,7 +29,7 @@ int? _isoToEpochMillis(String? iso) {
 ///   - Every insertEvent() is wrapped in a Drift transaction so the Events row
 ///     and the SyncQueue row are written atomically.
 ///   - All monetary amounts are integer paisa — never floating point.
-@DriftAccessor(tables: [Events, SyncQueue])
+@DriftAccessor(tables: [Events, SyncQueue, Shops])
 class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
   EventsDao(super.db);
 
@@ -176,6 +177,99 @@ class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
           ..where((sq) => sq.status.equals('PENDING'))
           ..orderBy([(sq) => OrderingTerm(expression: sq.id)]))
         .watch();
+  }
+
+  // ---------------------------------------------------------------------------
+  // SyncQueue DAO additions — STORY-013
+  // ---------------------------------------------------------------------------
+
+  /// Get next batch of PENDING sync queue entries (max [limit]).
+  /// Skips entries with retryCount >= 3 (dead-letter queue).
+  Future<List<SyncQueueData>> getPendingSyncBatch({int limit = 500}) {
+    return (select(syncQueue)
+          ..where(
+            (sq) =>
+                sq.status.equals('PENDING') &
+                sq.retryCount.isSmallerThanValue(3),
+          )
+          ..orderBy([(sq) => OrderingTerm(expression: sq.id)])
+          ..limit(limit))
+        .get();
+  }
+
+  /// Mark the given event IDs as SYNCED in the SyncQueue.
+  Future<void> markSynced(List<String> eventIds) async {
+    if (eventIds.isEmpty) return;
+    await (update(syncQueue)..where((sq) => sq.eventId.isIn(eventIds))).write(
+      const SyncQueueCompanion(status: Value('SYNCED')),
+    );
+  }
+
+  /// Mark the given event IDs as FAILED and increment retryCount.
+  Future<void> markFailed(List<String> eventIds) async {
+    if (eventIds.isEmpty) return;
+    // Drift doesn't support increment expressions directly in a batch write,
+    // so we use a raw SQL update.
+    final placeholders = eventIds.map((_) => '?').join(', ');
+    await db.customUpdate(
+      "UPDATE sync_queue SET status = 'FAILED', retry_count = retry_count + 1 "
+      'WHERE event_id IN ($placeholders)',
+      variables: eventIds.map((id) => Variable.withString(id)).toList(),
+      updates: {syncQueue},
+    );
+  }
+
+  /// Get the last successful pull timestamp for [shopId] (stored as lastSyncAt
+  /// on the Shops row). Returns null if the shop row doesn't exist yet.
+  Future<int?> getLastPullTimestamp(String shopId) async {
+    final shop = await (select(db.shops)
+          ..where((s) => s.id.equals(shopId)))
+        .getSingleOrNull();
+    return shop?.lastSyncAt;
+  }
+
+  /// Update lastSyncAt for [shopId] after a successful pull.
+  Future<void> updateLastPullTimestamp(
+    String shopId,
+    int timestampMillis,
+  ) async {
+    await (update(db.shops)..where((s) => s.id.equals(shopId))).write(
+      ShopsCompanion(lastSyncAt: Value(timestampMillis)),
+    );
+  }
+
+  /// Upsert an event received from the server (pull sync).
+  /// If the UUID already exists locally, only the serverTimestamp is updated.
+  /// If it is new (from another device), the full row is inserted.
+  Future<void> upsertEventFromServer({
+    required String id,
+    required String shopId,
+    required String eventType,
+    required String partyType,
+    required String partyId,
+    required int amountPaisa,
+    String? note,
+    required String deviceId,
+    String? actorLabel,
+    required int deviceTimestamp,
+    required int serverTimestamp,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final companion = EventsCompanion.insert(
+      id: id,
+      shopId: shopId,
+      eventType: eventType,
+      partyType: partyType,
+      partyId: partyId,
+      amountPaisa: amountPaisa,
+      note: Value(note),
+      deviceId: deviceId,
+      actorLabel: Value(actorLabel),
+      deviceTimestamp: deviceTimestamp,
+      serverTimestamp: Value(serverTimestamp),
+      createdAt: now,
+    );
+    await into(events).insertOnConflictUpdate(companion);
   }
 
   /// Returns the most recent CREDIT event timestamp (epoch millis) for a

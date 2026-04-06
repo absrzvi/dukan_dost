@@ -11,9 +11,22 @@ class ConnectivityService {
   Stream<List<ConnectivityResult>> get onConnectivityChanged =>
       _connectivity.onConnectivityChanged;
 
+  /// Convenience stream of bool — true when at least one non-none result.
+  /// Bluetooth connections are excluded (they don't provide internet access).
+  Stream<bool> get isOnlineStream => _connectivity.onConnectivityChanged.map(
+        (results) => results.any(
+          (r) =>
+              r != ConnectivityResult.none &&
+              r != ConnectivityResult.bluetooth,
+        ),
+      );
+
   /// Check current connectivity status.
   Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
-    return results.any((r) => r != ConnectivityResult.none);
+    return results.any(
+      (r) =>
+          r != ConnectivityResult.none && r != ConnectivityResult.bluetooth,
+    );
   }
 }
