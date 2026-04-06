@@ -56,6 +56,14 @@ class CustomersDao extends DatabaseAccessor<AppDatabase>
   // Single-row lookup
   // ---------------------------------------------------------------------------
 
+  /// Updates the [lastReminderAt] field for a customer.
+  Future<void> updateLastReminderAt(
+      String customerId, int timestampMillis) async {
+    await (update(customers)..where((c) => c.id.equals(customerId))).write(
+      CustomersCompanion(lastReminderAt: Value(timestampMillis)),
+    );
+  }
+
   /// Returns a customer by id, or null if not found / soft-deleted.
   Future<Customer?> getCustomer(String customerId) async {
     return (select(customers)
