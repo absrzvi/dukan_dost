@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../lib/config/env.dart';
 import '../../../lib/core/database/app_database.dart';
 import '../../../lib/core/sync/sync_service.dart';
 
@@ -27,7 +28,7 @@ Dio _makeMockDio({
   Map<String, dynamic>? getResponseBody,
   bool failRequests = false,
 }) {
-  final dio = Dio(BaseOptions(baseUrl: 'http://localhost:8000'));
+  final dio = Dio(BaseOptions(baseUrl: apiBaseUrl));
   dio.httpClientAdapter = _MockAdapter(
     postBody: postResponseBody ?? {'accepted': 0},
     getBody: getResponseBody ?? {'events': [], 'has_more': false},
