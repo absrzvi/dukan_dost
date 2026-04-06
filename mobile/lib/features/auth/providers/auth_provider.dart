@@ -55,7 +55,11 @@ class AuthState {
 
 class AuthNotifier extends Notifier<AuthState> {
   @override
-  AuthState build() => const AuthState();
+  AuthState build() {
+    // Check persisted auth on startup so the spinner resolves immediately.
+    Future.microtask(checkAuthStatus);
+    return const AuthState();
+  }
 
   Future<void> checkAuthStatus() async {
     final storage = ref.read(secureStorageProvider);
