@@ -38,4 +38,7 @@ class AppColors {
 
   // Reminder amber (MINOR-4 / STORY-010)
   static const Color reminderAmber = Color(0xFFFF8F00); // amber[800]
+
+  // WhatsApp brand green
+  static const Color whatsappGreen = Color(0xFF25D366);
 }

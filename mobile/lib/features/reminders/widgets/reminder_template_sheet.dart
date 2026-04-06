@@ -60,11 +60,16 @@ class _ReminderTemplateSheetState
     extends ConsumerState<_ReminderTemplateSheet> {
   late String _selectedType;
   bool _sending = false;
+  late final Future<String> _shopNameFuture;
 
   @override
   void initState() {
     super.initState();
     _selectedType = selectTemplateType(widget.daysOverdue);
+    final db = ref.read(appDatabaseProvider);
+    _shopNameFuture = db.select(db.shops).get().then(
+          (s) => s.isNotEmpty ? s.first.name : '',
+        );
   }
 
   String _labelForType(String type) {
@@ -135,13 +140,8 @@ class _ReminderTemplateSheetState
             child: Center(child: Text(e.toString())),
           ),
           data: (shopId) {
-            // Fetch shop name synchronously from DB for preview
-            final db = ref.read(appDatabaseProvider);
             return FutureBuilder<String>(
-              future: db
-                  .select(db.shops)
-                  .get()
-                  .then((s) => s.isNotEmpty ? s.first.name : ''),
+              future: _shopNameFuture,
               builder: (context, snap) {
                 final shopName = snap.data ?? '';
                 final sid = shopId ?? '';
@@ -221,7 +221,7 @@ class _ReminderTemplateSheetState
           key: const Key('send_reminder_button'),
           onPressed: _sending ? null : () => _send(shopId, shopName),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF25D366), // WhatsApp green
+            backgroundColor: AppColors.whatsappGreen,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(

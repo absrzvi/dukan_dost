@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/event_constants.dart';
 import '../../../core/utils/amount_formatter.dart';
 import '../../../core/utils/whatsapp_helper.dart';
+import '../../customers/repositories/customers_repository.dart';
 import '../../transactions/repositories/event_repository.dart';
+import '../reminder_templates.dart';
 
 /// Result returned by [ReminderService.sendReminder].
 enum ReminderResult { sentViaWhatsApp, noPhone, failed }
@@ -18,13 +19,13 @@ class ReminderTemplateType {
 
 /// Select the appropriate template type based on [daysOverdue].
 ///
-/// < 7  → gentle
-/// 7-29 → firm
-/// 30+  → final
+/// 0-13  → gentle
+/// 14-20 → firm
+/// 21+   → final
 String selectTemplateType(int daysOverdue) {
-  if (daysOverdue < 7) return ReminderTemplateType.gentle;
-  if (daysOverdue < 30) return ReminderTemplateType.firm;
-  return ReminderTemplateType.finalReminder;
+  if (daysOverdue >= 21) return ReminderTemplateType.finalReminder;
+  if (daysOverdue >= 14) return ReminderTemplateType.firm;
+  return ReminderTemplateType.gentle; // 0-13 days
 }
 
 /// Build the full reminder message from a template type and customer data.
@@ -40,24 +41,24 @@ String buildReminderMessage({
 
   switch (templateType) {
     case ReminderTemplateType.gentle:
-      return AppStrings.gentleTemplate
+      return ReminderTemplates.gentle
           .replaceAll('{name}', customerName)
           .replaceAll('{amount}', amount)
           .replaceAll('{shopName}', shopName);
     case ReminderTemplateType.firm:
-      return AppStrings.firmTemplate
+      return ReminderTemplates.firm
           .replaceAll('{name}', customerName)
           .replaceAll('{amount}', amount)
           .replaceAll('{days}', days)
           .replaceAll('{shopName}', shopName);
     case ReminderTemplateType.finalReminder:
-      return AppStrings.finalTemplate
+      return ReminderTemplates.finalReminder
           .replaceAll('{name}', customerName)
           .replaceAll('{amount}', amount)
           .replaceAll('{days}', days)
           .replaceAll('{shopName}', shopName);
     default:
-      return AppStrings.gentleTemplate
+      return ReminderTemplates.gentle
           .replaceAll('{name}', customerName)
           .replaceAll('{amount}', amount)
           .replaceAll('{shopName}', shopName);
@@ -70,9 +71,10 @@ String buildReminderMessage({
 ///   1. Write REMINDER_SENT event to local Drift DB (amountPaisa=0, note=templateType).
 ///   2. Open WhatsApp deep link (or SMS fallback if no phone).
 class ReminderService {
-  ReminderService(this._eventRepository);
+  ReminderService(this._eventRepository, this._customersRepository);
 
   final EventRepository _eventRepository;
+  final CustomersRepository _customersRepository;
 
   /// Exposed for testing only.
   @visibleForTesting
@@ -114,7 +116,13 @@ class ReminderService {
       actorLabel: actorLabel,
     );
 
-    // Step 2: Open WhatsApp or return noPhone
+    // Update lastReminderAt on the customer row (AC9)
+    await _customersRepository.updateLastReminderAt(customerId);
+
+    // Step 2: Open WhatsApp or return noPhone.
+    // Even with no phone we have already written the REMINDER_SENT event above
+    // (offline-first guarantee). SMS gateway integration is tracked in STORY-013.
+    // TODO: Launch sms: deep link when SMS gateway is integrated (STORY-013)
     if (customerPhone == null || customerPhone.trim().isEmpty) {
       return ReminderResult.noPhone;
     }

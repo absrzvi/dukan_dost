@@ -185,6 +185,12 @@ class CustomersRepository {
     });
   }
 
+  /// Update the last-reminder timestamp for a customer to now.
+  Future<void> updateLastReminderAt(String customerId) async {
+    await _customersDao.updateLastReminderAt(
+        customerId, DateTime.now().millisecondsSinceEpoch);
+  }
+
   /// Get a single customer by id.
   Future<Customer?> getCustomer(String customerId) {
     return _customersDao.getCustomer(customerId);

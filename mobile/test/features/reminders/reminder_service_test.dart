@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../lib/core/constants/event_constants.dart';
 import '../../../lib/core/database/app_database.dart';
+import '../../../lib/features/customers/repositories/customers_repository.dart';
 import '../../../lib/features/reminders/services/reminder_service.dart';
 import '../../../lib/features/transactions/repositories/event_repository.dart';
 
@@ -26,7 +27,11 @@ class _FakeWhatsAppTracker {
 /// Subclass of [ReminderService] that records WhatsApp calls without actually
 /// opening a browser / system app.
 class _TestReminderService extends ReminderService {
-  _TestReminderService(super.eventRepository, this._tracker);
+  _TestReminderService(
+    super.eventRepository,
+    super.customersRepository,
+    this._tracker,
+  );
 
   final _FakeWhatsAppTracker _tracker;
 
@@ -75,6 +80,7 @@ class _TestReminderService extends ReminderService {
 void main() {
   late AppDatabase db;
   late EventRepository repo;
+  late CustomersRepository customersRepo;
   late _FakeWhatsAppTracker tracker;
   late _TestReminderService service;
 
@@ -86,8 +92,13 @@ void main() {
   setUp(() {
     db = _makeTestDatabase();
     repo = EventRepository(database: db);
+    customersRepo = CustomersRepository(
+      db: db,
+      customersDao: db.customersDao,
+      eventsDao: db.eventsDao,
+    );
     tracker = _FakeWhatsAppTracker();
-    service = _TestReminderService(repo, tracker);
+    service = _TestReminderService(repo, customersRepo, tracker);
   });
 
   tearDown(() async {
@@ -182,28 +193,30 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
-  // 5. Template selection: gentle when daysOverdue < 7
+  // 5. Template selection: gentle when daysOverdue 0-13
   // -------------------------------------------------------------------------
-  test('gentle template selected when daysOverdue < 7', () {
+  test('gentle template selected when daysOverdue 0-13', () {
     expect(selectTemplateType(0), ReminderTemplateType.gentle);
     expect(selectTemplateType(6), ReminderTemplateType.gentle);
+    expect(selectTemplateType(13), ReminderTemplateType.gentle);
   });
 
   // -------------------------------------------------------------------------
-  // 6. Template selection: firm when daysOverdue >= 7 and < 30
+  // 6. Template selection: firm when daysOverdue 14-20
   // -------------------------------------------------------------------------
-  test('firm template selected when daysOverdue >= 7 and < 30', () {
-    expect(selectTemplateType(7), ReminderTemplateType.firm);
+  test('firm template selected when daysOverdue 14-20', () {
     expect(selectTemplateType(14), ReminderTemplateType.firm);
-    expect(selectTemplateType(29), ReminderTemplateType.firm);
+    expect(selectTemplateType(17), ReminderTemplateType.firm);
+    expect(selectTemplateType(20), ReminderTemplateType.firm);
   });
 
   // -------------------------------------------------------------------------
-  // 7. Template selection: final when daysOverdue >= 30
+  // 7. Template selection: final when daysOverdue >= 21
   // -------------------------------------------------------------------------
-  test('final template selected when daysOverdue >= 30', () {
+  test('final template selected when daysOverdue >= 21', () {
+    expect(selectTemplateType(21), ReminderTemplateType.finalReminder);
     expect(selectTemplateType(30), ReminderTemplateType.finalReminder);
-    expect(selectTemplateType(60), ReminderTemplateType.finalReminder);
+    expect(selectTemplateType(100), ReminderTemplateType.finalReminder);
   });
 
   // -------------------------------------------------------------------------
