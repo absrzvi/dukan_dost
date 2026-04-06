@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/sync/sync_provider.dart';
+import '../../backup/screens/backup_screen.dart';
 import '../../customers/screens/customer_list_screen.dart';
 import '../../suppliers/screens/suppliers_screen.dart';
 import '../../transactions/providers/transactions_provider.dart';
@@ -45,6 +46,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ];
 
         return Scaffold(
+          drawer: Drawer(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                const DrawerHeader(
+                  decoration: BoxDecoration(color: AppColors.primary),
+                  child: Text(
+                    'Dukaan Dost',
+                    style: TextStyle(color: Colors.white, fontSize: 22),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.backup),
+                  title: const Text(AppStrings.backup),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const BackupScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
           body: IndexedStack(
             index: _selectedIndex,
             children: screens,
