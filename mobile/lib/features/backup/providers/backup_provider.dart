@@ -8,7 +8,7 @@ final backupServiceProvider = Provider<BackupService>((ref) {
 });
 
 /// Reads the last backup date from the filesystem.
-final lastBackupDateProvider = FutureProvider<DateTime?>((ref) async {
+final lastBackupDateProvider = FutureProvider.autoDispose<DateTime?>((ref) async {
   final service = ref.watch(backupServiceProvider);
   return service.getLastBackupDate();
 });

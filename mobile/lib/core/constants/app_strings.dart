@@ -219,6 +219,7 @@ class AppStrings {
   static const String lastBackup = 'آخری بیک اپ';
   static const String googleDriveComingSoon = 'گوگل ڈرائیو جلد آئے گا';
   static const String restoreWarning = 'بحالی کے بعد ایپ دوبارہ شروع کریں';
+  static const String backupRestoreComingSoon = 'ریسٹور فیچر جلد آ رہا ہے';
 
   // STORY-016: FCM
   static const String fcmComingSoon = 'نوٹیفکیشن جلد آئے گا';

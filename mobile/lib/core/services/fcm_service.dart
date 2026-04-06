@@ -12,7 +12,7 @@ class FCMService {
     required String deviceId,
     String? fcmToken,
   }) async {
-    // TODO STORY-016: Call POST /api/devices/register-fcm/ with real token.
+    // TODO STORY-016: Call POST /api/shop/devices/register-fcm/ with real token.
     debugPrint('[FCM] Would register token: $fcmToken for device: $deviceId');
   }
 }

@@ -21,7 +21,8 @@ class IsAuthenticatedShop(BasePermission):
     """
 
     def has_permission(self, request: Request, view: object) -> bool:  # type: ignore[override]
-        return request.user is not None and request.auth is not None
+        from apps.shops.models import Shop  # noqa: PLC0415
+        return bool(request.auth) and isinstance(request.user, Shop)
 
 
 class ShopProfileView(APIView):

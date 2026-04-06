@@ -138,7 +138,8 @@ class BackupScreen extends ConsumerWidget {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}  ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    final local = date.toLocal();
+    return '${local.day}/${local.month}/${local.year}  ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   }
 
   Future<void> _doBackup(BuildContext context, WidgetRef ref) async {
@@ -169,13 +170,12 @@ class BackupScreen extends ConsumerWidget {
   }
 
   Future<void> _doRestore(BuildContext context, WidgetRef ref) async {
-    // File picker not available without the file_picker package.
-    // Show a dialog instructing user to provide the path manually.
     // TODO STORY-015: Integrate file_picker package for proper file selection.
+    // Until file_picker is added, restore is not yet available.
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text(AppStrings.restoreWarning),
+        content: Text(AppStrings.backupRestoreComingSoon),
         backgroundColor: AppColors.accent,
       ),
     );

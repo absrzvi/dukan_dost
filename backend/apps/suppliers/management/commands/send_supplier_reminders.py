@@ -52,11 +52,11 @@ class Command(BaseCommand):
                 )
                 continue
 
-            amount_pkr = supplier.invoice_amount_paisa / 100
+            amount_pkr = supplier.invoice_amount_paisa // 100
             notification_payload = {
                 "title": "Supplier payment jald aane wali hai",
                 "body": (
-                    f"{supplier.name} ko PKR {amount_pkr:,.0f} ki payment "
+                    f"{supplier.name} ko PKR {amount_pkr:,} ki payment "
                     f"{supplier.due_date} tak karni hai."
                 ),
                 "data": {
@@ -79,15 +79,13 @@ class Command(BaseCommand):
                 #   )
                 #   messaging.send(message)
                 logger.info(
-                    "[FCM STUB] Would send to device %s (token: %s...): %s",
+                    "[FCM STUB] Would send to device %s: %s",
                     device.device_id,
-                    device.fcm_token[:10] if device.fcm_token else "",
                     notification_payload,
                 )
                 self.stdout.write(
                     f"  [FCM STUB] Supplier={supplier.name}, "
-                    f"Device={device.device_id}, "
-                    f"Token={device.fcm_token[:10] if device.fcm_token else 'N/A'}..."
+                    f"Device={device.device_id}"
                 )
 
         self.stdout.write("[send_supplier_reminders] Done.")
