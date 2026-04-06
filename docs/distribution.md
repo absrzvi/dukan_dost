@@ -134,7 +134,80 @@ Testers download from: `https://github.com/absrzvi/dukan_dost/releases/latest`
 
 ---
 
-## 7. No hardcoded URLs policy
+## 7. GitHub Releases — Step by Step
+
+This is the recommended distribution channel for tester builds. Each release gets a permanent, versioned download URL.
+
+### a. Bump the version number
+
+Edit `mobile/pubspec.yaml`:
+```yaml
+version: 0.1.0+1   # format: semver+build-number
+```
+
+Commit the bump:
+```powershell
+git add mobile/pubspec.yaml
+git commit -m "chore: bump version to 0.1.0+1"
+git push
+```
+
+### b. Build the release APK
+
+```powershell
+cd mobile
+C:\flutter\bin\flutter.bat build apk --release --dart-define=API_BASE_URL=https://your-backend.onrender.com
+```
+
+### c. Get the SHA-256 hash (Windows)
+
+```powershell
+Get-FileHash build\app\outputs\flutter-apk\app-release.apk -Algorithm SHA256
+```
+
+Copy the hash — paste it into the release body so testers can verify their download.
+
+### d. Create the GitHub tag
+
+```powershell
+git tag -a v0.1.0 -m "Tester build v0.1.0"
+git push origin v0.1.0
+```
+
+### e. Create the GitHub Release and upload the APK
+
+```powershell
+# Using the GitHub CLI (gh):
+gh release create v0.1.0 `
+  --title "Dukaan Dost v0.1.0 — First tester build" `
+  --notes "SHA-256: <paste hash here>. Install instructions: docs/tester-guide.md" `
+  mobile\build\app\outputs\flutter-apk\app-release.apk
+```
+
+Or via the GitHub web UI:
+1. Go to **github.com/absrzvi/dukan_dost/releases/new**
+2. Select tag `v0.1.0`
+3. Set title and paste the SHA-256 in the description
+4. Drag and drop `app-release.apk` into the assets area
+5. Click **Publish release**
+
+### f. Share the download link
+
+**Latest release (always current):**
+```
+https://github.com/absrzvi/dukan_dost/releases/latest
+```
+
+**Direct APK download for a specific version:**
+```
+https://github.com/absrzvi/dukan_dost/releases/download/v0.1.0/app-release.apk
+```
+
+Send the `/releases/latest` URL to testers — it always points to the newest build automatically.
+
+---
+
+## 8. No hardcoded URLs policy
 
 The following must **never** appear hardcoded outside `env.dart` or test fixtures:
 - `10.0.2.2`

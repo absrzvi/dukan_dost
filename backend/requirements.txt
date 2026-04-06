@@ -5,6 +5,11 @@ psycopg2-binary==2.9.9
 redis==5.0.7
 django-redis==5.4.0
 celery==5.3.6
+# Production deployment
+gunicorn==21.2.0
+whitenoise==6.7.0
+dj-database-url==2.2.0
+# Type stubs / dev tools
 mypy==1.11.2
 django-stubs==5.0.4
 djangorestframework-stubs==3.15.0
