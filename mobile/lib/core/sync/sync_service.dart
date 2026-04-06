@@ -130,10 +130,16 @@ class SyncService {
 
     while (true) {
       try {
+        // Convert epoch-millis cursor to ISO 8601 string for Django parse_datetime.
+        // On first sync (cursor == null) use epoch zero so the server returns all events.
+        final sinceIso = cursor != null && cursor > 0
+            ? DateTime.fromMillisecondsSinceEpoch(cursor, isUtc: true).toIso8601String()
+            : '1970-01-01T00:00:00.000Z';
+
         final response = await _dio.get<Map<String, dynamic>>(
           '/api/sync/events',
           queryParameters: {
-            'since': cursor ?? 0,
+            'since': sinceIso,
             'limit': 500,
           },
           options: Options(

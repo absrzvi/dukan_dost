@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart' as sqflite;
 
 /// Handles local SQLite backup export and restore.
 class BackupService {
@@ -16,6 +17,11 @@ class BackupService {
   }
 
   /// Copies the Drift SQLite DB to the external Documents folder.
+  ///
+  /// Performs a WAL checkpoint before copying so that the backup includes all
+  /// writes that may still be in the WAL journal. Without this, the backup may
+  /// be missing recent transactions on WAL-mode databases.
+  ///
   /// Returns the destination file path on success.
   Future<String> exportLocalBackup() async {
     final srcPath = await _dbFilePath();
@@ -23,6 +29,17 @@ class BackupService {
 
     if (!srcFile.existsSync()) {
       throw Exception('Database file not found: $srcPath');
+    }
+
+    // Checkpoint WAL before copying to ensure all pending writes are flushed
+    // into the main database file. This prevents corrupt/incomplete backups.
+    try {
+      final db = await sqflite.openDatabase(srcPath, readOnly: false);
+      await db.rawQuery('PRAGMA wal_checkpoint(TRUNCATE);');
+      await db.close();
+    } catch (e) {
+      debugPrint('[BackupService] WAL checkpoint failed (non-fatal): $e');
+      // Continue — backup may be slightly stale but is better than nothing.
     }
 
     // Use external storage if available, otherwise fall back to app documents dir.

@@ -120,18 +120,17 @@ class EventSyncView(APIView):
             limit  — int, default 500
         """
         since_param = request.query_params.get("since")
-        if not since_param:
-            return Response(
-                {"detail": "'since' query parameter is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
-        since_dt = parse_datetime(since_param)
-        if since_dt is None:
-            return Response(
-                {"detail": f"Invalid 'since' format: '{since_param}'. Use ISO 8601."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # Treat missing or "0" as epoch zero — returns full event history for the shop.
+        if not since_param or since_param == "0":
+            since_dt = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        else:
+            since_dt = parse_datetime(since_param)
+            if since_dt is None:
+                return Response(
+                    {"detail": f"Invalid 'since' format: '{since_param}'. Use ISO 8601."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         # Make timezone-aware if naive.
         if since_dt.tzinfo is None:

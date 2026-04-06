@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../features/transactions/providers/transactions_provider.dart';
 import '../providers/suppliers_provider.dart';
 
 /// Modal bottom sheet for creating a new supplier.
@@ -63,9 +64,11 @@ class _AddSupplierSheetState extends ConsumerState<AddSupplierSheet> {
         }
       }
 
+      final deviceId = ref.read(deviceIdProvider);
       await repo.createSupplier(
         shopId: widget.shopId,
         name: _nameController.text.trim(),
+        deviceId: deviceId,
         phone: phone.isEmpty ? null : phone,
         dueDate: _dueDate,
         initialDebtPaisa: initialDebtPaisa,
