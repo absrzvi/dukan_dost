@@ -11,6 +11,7 @@ import 'tables/shops_table.dart';
 import 'tables/backups_table.dart';
 import 'daos/events_dao.dart';
 import 'daos/customers_dao.dart';
+import 'daos/suppliers_dao.dart';
 
 // Generated file — run: flutter pub run build_runner build
 // ignore: uri_has_not_been_generated
@@ -25,7 +26,7 @@ part 'app_database.g.dart';
     Shops,
     Backups,
   ],
-  daos: [EventsDao, CustomersDao],
+  daos: [EventsDao, CustomersDao, SuppliersDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
